@@ -35,7 +35,7 @@ namespace Joust
         private void SetMultiSampling(object sender, PreparingDeviceSettingsEventArgs eventArgs)
         {
             PresentationParameters PresentParm = eventArgs.GraphicsDeviceInformation.PresentationParameters;
-            PresentParm.MultiSampleCount = 4;
+            PresentParm.MultiSampleCount = 1;
         }
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -46,17 +46,15 @@ namespace Joust
         protected override void Initialize()
         {
             Serv.Initialize(m_GraphicsDM, this);
-            // Create a new SpriteBatch, which can be used to draw textures.
-            Serv.SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             base.Initialize();
         }
 
         protected override void BeginRun()
         {
-            base.BeginRun();
+            m_Player.BeginRun();
 
-            m_Player.Texture(m_PlayerTexture);
+            base.BeginRun();
         }
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -64,8 +62,9 @@ namespace Joust
         /// </summary>
         protected override void LoadContent()
         {
-
             m_PlayerTexture = Content.Load<Texture2D>(@"JoustSpriteSheet");
+            m_Player.LoadTexture(m_PlayerTexture);
+
         }
 
         /// <summary>

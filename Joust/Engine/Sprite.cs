@@ -53,6 +53,12 @@ namespace Joust.Engine
         {
             get { return m_Frames[m_CurrentFrame]; }
         }
+
+        public Texture2D Texture
+        {
+            get { return m_Texture; }
+        }
+
         #endregion
         public Sprite(Game game) : base(game)
         {
@@ -87,7 +93,7 @@ namespace Joust.Engine
 
         public override void Update(GameTime gameTime)
         {
-            if (Animate)
+            if (Animate && Active)
             {
                 if (m_FrameTime.Seconds >= m_FrameTime.Amount)
                 {
@@ -104,10 +110,25 @@ namespace Joust.Engine
 
         public void Draw(GameTime gameTime)
         {
-            if (Active)
+            if (Active && !OnTopOfParent)
             {
-                Services.SpriteBatch.Draw(m_Texture, Position, Source, m_TintColor, RotationInRadians,
-                    Vector2.Zero, Scale, SpriteEffects.None, 0.0f);
+                if (m_Frames.Count > 0)
+                {
+                    Services.SpriteBatch.Draw(m_Texture, Position, Source, m_TintColor, RotationInRadians,
+                        Vector2.Zero, Scale, SpriteEffects.None, 0.0f);
+                }
+            }
+
+            if (Parent)
+            {
+                foreach (Sprite child in Children)
+                {
+                    if (child.OnTopOfParent && child.Active)
+                    {
+                        Services.SpriteBatch.Draw(child.Texture, child.Position, child.Source, m_TintColor, child.RotationInRadians,
+                            Vector2.Zero, child.Scale, SpriteEffects.None, 0.0f);
+                    }
+                }
             }
         }
     }

@@ -93,6 +93,8 @@ namespace Joust.Engine
         private Services(Game game) : base(game)
         {
             game.Components.Add(this);
+            // Create a new SpriteBatch, which can be used to draw textures.
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
         }
         #endregion
         #region Public Methods

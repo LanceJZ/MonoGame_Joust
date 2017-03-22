@@ -81,6 +81,7 @@ namespace Joust.Engine
         public bool Parent
         {
             set { m_Parent = value; }
+            get { return m_Parent; }
         }
 
 
