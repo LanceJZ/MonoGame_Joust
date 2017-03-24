@@ -17,6 +17,7 @@ namespace Joust.Engine
         private static Random m_RandomNumber;
         private static Vector2 m_ScreenSize;
         private static List<IDrawComponent> m_DrawableComponents;
+        private static List<IUpdateableComponent> m_UpdateableComponents;
         #endregion
         #region Properties
         /// <summary>
@@ -59,6 +60,11 @@ namespace Joust.Engine
             m_DrawableComponents.Add(drawableComponent);
 
         }
+
+        public static void AddUpdateableComponent(IUpdateableComponent updateableComponent)
+        {
+            m_UpdateableComponents.Add(updateableComponent);
+        }
         /// <summary>
         /// Get a random float between min and max
         /// </summary>
@@ -100,12 +106,22 @@ namespace Joust.Engine
         #region Public Methods
         public override void Draw(GameTime gameTime)
         {
-            base.Draw(gameTime);
-
             foreach(IDrawComponent drawable in m_DrawableComponents)
             {
                 drawable.Draw(gameTime);
             }
+
+            base.Draw(gameTime);
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            foreach(IUpdateableComponent updateable in m_UpdateableComponents)
+            {
+                updateable.Update(gameTime);
+            }
+
+            base.Update(gameTime);
         }
         /// <summary>
         /// This is used to start up Panther Engine Services.
@@ -127,6 +143,7 @@ namespace Joust.Engine
                 m_RandomNumber = new Random(DateTime.Now.Millisecond);
                 //Set View Matrix and Projection Matrix
                 m_DrawableComponents = new List<IDrawComponent>();
+                m_UpdateableComponents = new List<IUpdateableComponent>();
 
                 return;
             }

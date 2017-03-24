@@ -71,12 +71,38 @@ namespace Joust.Engine
             Services.AddDrawableComponent(this);
             m_FrameTime.Amount = 0.1f;
         }
-
-        public void Initialize(Texture2D texture, Rectangle initialFrame, Vector2 position, bool onTop)
+        /// <summary>
+        /// Initialize sprite with texture, where on sprite sheet to get texture, starting position, and if on top if child.
+        /// </summary>
+        /// <param name="texture"></param>
+        /// <param name="initialFrame"></param>
+        /// <param name="position"></param>
+        /// <param name="onTop"></param>
+        public void Initialize(Texture2D texture, Rectangle initialFrame, Vector2 position, float scale, bool onTop, bool animate)
         {
             m_Texture = texture;
             Position = position;
+            Scale = scale;
+            SetAABB(new Vector2(initialFrame.Width - initialFrame.X, initialFrame.Height - initialFrame.Y));
             OnTopOfParent = onTop;
+            Animate = animate;
+            m_Frames.Add(initialFrame);
+        }
+        /// <summary>
+        /// This is mostly used for background sprites. Not movement and animation will be set to false.
+        /// </summary>
+        /// <param name="texture"></param>
+        /// <param name="initialFrame"></param>
+        /// <param name="position"></param>
+        public void Initialize(Texture2D texture, Rectangle initialFrame, Vector2 position, float scale)
+        {
+            m_Texture = texture;
+            Position = position;
+            Scale = scale;
+            SetAABB(new Vector2(initialFrame.Width, initialFrame.Height));
+            OnTopOfParent = false;
+            Moveable = false;
+            Animate = false;
             m_Frames.Add(initialFrame);
         }
 

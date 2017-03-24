@@ -2,237 +2,313 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 #endregion
 
 namespace Joust.Engine
 {
-    public class PositionedObject : GameComponent
-    {
-        #region Fields
-        private float m_ElapsedGameTime;
-        // Doing these as fields is almost twice as fast as if they were properties.
-        // Also, sense XYZ are fields they do not get data binned as a property.
-        Game m_Game;
-        public List<PositionedObject> Children;
-        public Vector2 Position;
-        public Vector2 Acceleration;
-        public Vector2 Velocity;
-        public Vector2 ReletivePosition;
-        float m_RotationInRadians;
-        float m_ReletiveRotation;
-        float m_ScalePercent = 1;
-        float m_RotationVelocity;
-        float m_RotationAcceleration;
-        float m_Radius;
-        bool m_Hit = false;
-        bool m_ExplosionActive = false;
-        bool m_Pause = false;
-        bool m_Moveable = true;
-        bool m_Active = true;
-        bool m_ActiveDependent;
-        bool m_DirectConnection;
-        bool m_Parent;
-        #endregion
-        #region Properties
-        public float ElapsedGameTime { get { return m_ElapsedGameTime; } }
+	public class PositionedObject : GameComponent
+	{
+		#region Fields
+		private float m_ElapsedGameTime;
+		// Doing these as fields is almost twice as fast as if they were properties.
+		// Also, sense XYZ are fields they do not get data binned as a property.
+		public List<PositionedObject> Children;
+		public Vector2 Position;
+		public Vector2 Acceleration;
+		public Vector2 Velocity;
+		public Vector2 ReletivePosition;
+		Rectangle m_AABB; // The axis-aligned bounding box.
+		BasicEffect renderer; // The basic effect used to render the AABB.
+		Matrix m_ViewMatrix = Matrix.CreateLookAt(new Vector3(0.0f, 0.0f, 1f), Vector3.Zero, Vector3.Up);
+		Matrix m_WorldMatrix = Matrix.CreateTranslation(0, 0, 0); // The GameModel's transformation matrix.
+        Matrix m_ProjectionMatrix;
+        short[] indexData; // The index array used to render the AABB.
+		VertexPositionColor[] aabbVertices; // The AABB vertex array (used for rendering).
+		float m_RotationInRadians;
+		float m_ReletiveRotation;
+		float m_ScalePercent = 1;
+		float m_RotationVelocity;
+		float m_RotationAcceleration;
+		float m_Radius;
+		bool m_Hit = false;
+		bool m_ExplosionActive = false;
+		bool m_Pause = false;
+		bool m_Moveable = true;
+		bool m_Active = true;
+		bool m_ActiveDependent;
+		bool m_DirectConnection;
+		bool m_Parent;
+		bool m_Debug;
+		#endregion
+		#region Properties
+		public float ElapsedGameTime { get { return m_ElapsedGameTime; } }
 
-        public float RotationInRadians
-        {
-            get { return m_RotationInRadians; }
+		public float RotationInRadians
+		{
+			get { return m_RotationInRadians; }
 
-            set { m_RotationInRadians = value; }
-        }
+			set { m_RotationInRadians = value; }
+		}
 
-        public float ReletiveRotation
-        {
-            get { return m_ReletiveRotation; }
+		public float ReletiveRotation
+		{
+			get { return m_ReletiveRotation; }
 
-            set { m_ReletiveRotation = value; }
-        }
+			set { m_ReletiveRotation = value; }
+		}
 
-        public float Scale
-        {
-            get { return m_ScalePercent; }
+		public float Scale
+		{
+			get { return m_ScalePercent; }
 
-            set { m_ScalePercent = value; }
-        }
+			set { m_ScalePercent = value; }
+		}
 
-        public float RotationVelocity
-        {
-            get { return m_RotationVelocity; }
+		public float RotationVelocity
+		{
+			get { return m_RotationVelocity; }
 
-            set { m_RotationVelocity = value; }
-        }
+			set { m_RotationVelocity = value; }
+		}
 
-        public float RotationAcceleration
-        {
-            get { return m_RotationAcceleration; }
+		public float RotationAcceleration
+		{
+			get { return m_RotationAcceleration; }
 
-            set { m_RotationAcceleration = value; }
-        }
+			set { m_RotationAcceleration = value; }
+		}
 
-        public float Radius
-        {
-            get { return m_Radius; }
+		public float Radius
+		{
+			get { return m_Radius; }
 
-            set { m_Radius = value; }
-        }
+			set { m_Radius = value; }
+		}
 
-        public bool Parent
-        {
-            set { m_Parent = value; }
-            get { return m_Parent; }
-        }
+		public bool Parent
+		{
+			set { m_Parent = value; }
+			get { return m_Parent; }
+		}
 
 
-        public bool Hit
-        {
-            get { return m_Hit; }
+		public bool Hit
+		{
+			get { return m_Hit; }
 
-            set { m_Hit = value; }
-        }
+			set { m_Hit = value; }
+		}
 
-        public bool ExplosionActive
-        {
-            get { return m_ExplosionActive; }
+		public bool ExplosionActive
+		{
+			get { return m_ExplosionActive; }
 
-            set { m_ExplosionActive = value; }
-        }
+			set { m_ExplosionActive = value; }
+		}
 
-        public bool Pause
-        {
-            get { return m_Pause; }
+		public bool Pause
+		{
+			get { return m_Pause; }
 
-            set { m_Pause = value; }
-        }
+			set { m_Pause = value; }
+		}
 
-        public bool Moveable
-        {
-            get { return m_Moveable; }
+		public bool Moveable
+		{
+			get { return m_Moveable; }
 
-            set
-            { m_Moveable = value; }
-        }
+			set
+			{ m_Moveable = value; }
+		}
 
-        public bool Active
-        {
-            get { return m_Active; }
+		public bool Active
+		{
+			get { return m_Active; }
 
-            set { m_Active = value; }
-        }
+			set { m_Active = value; }
+		}
 
-        public bool ActiveDependent
-        {
-            get { return m_ActiveDependent; }
+		public bool ActiveDependent
+		{
+			get { return m_ActiveDependent; }
 
-            set { m_ActiveDependent = value; }
-        }
+			set { m_ActiveDependent = value; }
+		}
 
-        public bool DirectConnection
-        {
-            get { return m_DirectConnection; }
+		public bool DirectConnection
+		{
+			get { return m_DirectConnection; }
 
-            set { m_DirectConnection = value; }
-        }
-        #endregion
-        #region Constructor
-        /// <summary>
-        /// This is the constructor that gets the Positioned Object ready for use and adds it to the Drawable Components list.
-        /// </summary>
-        /// <param name="game">The game class</param>
-        public PositionedObject(Game game) : base(game)
-        {
-            game.Components.Add(this);
-            m_Game = game;
-            Children = new List<PositionedObject>();
-        }
-        #endregion
-        #region Public Methods
-        /// <summary>
-        /// Allows the game component to be updated.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        public override void Update(GameTime gameTime)
-        {
-            if (Moveable && Active)
-            {
-                base.Update(gameTime);
+			set { m_DirectConnection = value; }
+		}
+		/// <summary>036
+		/// Gets or sets the GameModel's AABB.037
+		/// </summary>
+		public Rectangle AABB
+		{
+			get { return m_AABB; }
+			set { m_AABB = value; }
+		}
 
-                m_ElapsedGameTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                Velocity += Acceleration * m_ElapsedGameTime;
-                Position += Velocity * m_ElapsedGameTime;
-                RotationVelocity += RotationAcceleration * m_ElapsedGameTime;
-                RotationInRadians += RotationVelocity * m_ElapsedGameTime;
+		public bool Debug
+		{
+			set { m_Debug = value; }
+		}
+		#endregion
+		#region Constructor
+		/// <summary>
+		/// This is the constructor that gets the Positioned Object ready for use and adds it to the Drawable Components list.
+		/// </summary>
+		/// <param name="game">The game class</param>
+		public PositionedObject(Game game) : base(game)
+		{
+			game.Components.Add(this);
+			Children = new List<PositionedObject>();
+		}
+		#endregion
+		#region Public Methods
+		/// <summary>
+		/// Allows the game component to be updated.
+		/// </summary>
+		/// <param name="gameTime">Provides a snapshot of timing values.</param>
+		public override void Update(GameTime gameTime)
+		{
+			if (Moveable && Active)
+			{
+				base.Update(gameTime);
 
-                if (RotationInRadians > MathHelper.TwoPi)
-                    RotationInRadians = 0;
+				m_ElapsedGameTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+				Velocity += Acceleration * m_ElapsedGameTime;
+				Position += Velocity * m_ElapsedGameTime;
+				m_AABB.X = (int)(Position.X);
+				m_AABB.Y = (int)(Position.Y);
+				RotationVelocity += RotationAcceleration * m_ElapsedGameTime;
+				RotationInRadians += RotationVelocity * m_ElapsedGameTime;
 
-                if (RotationInRadians < 0)
-                    RotationInRadians = MathHelper.TwoPi;
-            }
+				if (RotationInRadians > MathHelper.TwoPi)
+					RotationInRadians = 0;
 
-            if (m_Parent)
-            {
-                foreach (PositionedObject child in Children)
-                {
-                    if (Active)
-                    {
-                        if (child.DirectConnection)
-                        {
-                            child.Position = Position;
-                            child.RotationInRadians = RotationInRadians;
-                            child.Scale = Scale;
-                        }
-                        else
-                        {
-                            child.Position = Vector2.Transform(child.ReletivePosition,
-                                Matrix.CreateRotationZ(RotationInRadians));
-                            child.Position += Position;
-                            child.RotationInRadians = RotationInRadians + child.ReletiveRotation;
-                        }
-                    }
+				if (RotationInRadians < 0)
+					RotationInRadians = MathHelper.TwoPi;
+			}
 
-                    if (child.ActiveDependent)
-                        child.Active = Active;
-                }
-            }
-        }
 
-        public override void Initialize()
-        {
-            base.Initialize();
 
-        }
+			if (m_Parent)
+			{
+				foreach (PositionedObject child in Children)
+				{
+					if (Active)
+					{
+						if (child.DirectConnection)
+						{
+							child.Position = Position;
+							child.RotationInRadians = RotationInRadians;
+							child.Scale = Scale;
+						}
+						else
+						{
+							child.Position = Vector2.Transform(child.ReletivePosition,
+								Matrix.CreateRotationZ(RotationInRadians));
+							child.Position += Position;
+							child.RotationInRadians = RotationInRadians + child.ReletiveRotation;
+						}
+					}
 
-        public virtual void BeginRun()
-        {
+					if (child.ActiveDependent)
+						child.Active = Active;
+				}
+			}
+		}
 
-        }
+		public override void Initialize()
+		{
+			m_AABB = new Rectangle();
 
-        public void AddChild(PositionedObject child, bool activeDependent, bool directConnection)
-        {
-            Children.Add(child);
-            Children[Children.Count - 1].ActiveDependent = activeDependent;
-            Children[Children.Count - 1].DirectConnection = directConnection;
-            m_Parent = true;
-        }
+			base.Initialize();
+		}
 
-        public void Remove()
-        {
-            m_Game.Components.Remove(this);
-        }
+		public virtual void BeginRun()
+		{
+			m_ProjectionMatrix = Matrix.CreateOrthographic(Services.WindowWidth, Services.WindowHeight, 1, 2);
+		}
 
-        public bool CirclesIntersect(Vector2 Target, float TargetRadius)
-        {
-            float distanceX = Target.X - Position.X;
-            float distanceY = Target.Y - Position.Y;
-            float radius = Radius + TargetRadius;
+		public void AddChild(PositionedObject child, bool activeDependent, bool directConnection)
+		{
+			Children.Add(child);
+			Children[Children.Count - 1].ActiveDependent = activeDependent;
+			Children[Children.Count - 1].DirectConnection = directConnection;
+			m_Parent = true;
+		}
 
-            if ((distanceX * distanceX) + (distanceY * distanceY) < radius * radius)
-                return true;
+		public void SetAABB(Vector2 hieghtWidth)
+		{
+			m_AABB = new Rectangle((int)Position.X, (int)Position.Y, (int)(hieghtWidth.X * m_ScalePercent),
+                (int)(hieghtWidth.Y * m_ScalePercent));
+		}
 
-            return false;
-        }
-        #endregion
-    }
+		public void Remove()
+		{
+			Game.Components.Remove(this);
+		}
+
+		public bool CirclesIntersect(Vector2 Target, float TargetRadius)
+		{
+			float distanceX = Target.X - Position.X;
+			float distanceY = Target.Y - Position.Y;
+			float radius = Radius + TargetRadius;
+
+			if ((distanceX * distanceX) + (distanceY * distanceY) < radius * radius)
+				return true;
+
+			return false;
+		}
+		#endregion
+		#region Draw AABB
+		void SetupRenderer()
+		{
+			// Create a new BasicEffect instance.
+			renderer = new BasicEffect(Game.GraphicsDevice);
+
+			// This lets you color the AABB.
+			renderer.VertexColorEnabled = true;
+
+			// Set renderer matrices.
+			renderer.World = m_WorldMatrix;
+			renderer.View = m_ViewMatrix;
+			renderer.Projection = m_ProjectionMatrix;
+		}
+
+		void DebugDraw(BoundingBox aabb, Color color)
+		{
+			// Setup the debug renderer.
+			SetupRenderer();
+
+			// Create an array to store the AABB's vertices.
+			aabbVertices = new VertexPositionColor[8];
+
+			// Get an array of points that make up the corners of the AABB.
+			Vector3[] corners = aabb.GetCorners();
+
+			// Fill the AABB vertex array.
+			for (int i = 0; i < 8; i++)
+			{
+				aabbVertices[i].Position = corners[i];
+				aabbVertices[i].Color = color;
+			}
+
+			// Create the index array
+			indexData = new short[] { 0, 1,	1, 2, 2, 3,	3, 0, 0, 4,	1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4,};
+
+			// Loop through each effect pass.
+			foreach (EffectPass pass in renderer.CurrentTechnique.Passes)
+			{
+				// Draw AABB.
+				Game.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(PrimitiveType.LineList,
+					aabbVertices, 0, 8, indexData, 0, 12);
+			}
+		}
+		#endregion
+	}
 }

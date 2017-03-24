@@ -6,13 +6,13 @@ namespace Joust
 {
     using Serv = Engine.Services;
     using Timer = Engine.Timer;
-    using PO = Engine.PositionedObject;
+    using Object = Engine.PositionedObject;
 
     public class Game : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager m_GraphicsDM;
-        Joust.PO.Player m_Player;
-        Texture2D m_PlayerTexture;
+        PO.Player m_Player;
+        Background m_Background;
 
         public Game()
         {
@@ -29,7 +29,8 @@ namespace Joust
 
             Content.RootDirectory = "Content";
 
-            m_Player = new Joust.PO.Player(this);
+            m_Background = new Background(this);
+            m_Player = new PO.Player(this);
         }
 
         private void SetMultiSampling(object sender, PreparingDeviceSettingsEventArgs eventArgs)
@@ -53,6 +54,10 @@ namespace Joust
         protected override void BeginRun()
         {
             m_Player.BeginRun();
+            m_Background.BeginRun();
+            m_Background.PlayerReference(m_Player);
+            Serv.AddUpdateableComponent(m_Background);
+            m_Player.Landed();
 
             base.BeginRun();
         }
@@ -62,9 +67,8 @@ namespace Joust
         /// </summary>
         protected override void LoadContent()
         {
-            m_PlayerTexture = Content.Load<Texture2D>(@"JoustSpriteSheet");
-            m_Player.LoadTexture(m_PlayerTexture);
-
+            m_Background.LoadContent();
+            m_Player.LoadContent();
         }
 
         /// <summary>
@@ -75,7 +79,6 @@ namespace Joust
         {
             // TODO: Unload any non ContentManager content here
         }
-
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
