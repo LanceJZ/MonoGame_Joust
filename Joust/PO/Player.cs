@@ -9,63 +9,72 @@ namespace Joust.PO
 {
     using Serv = Engine.Services;
     using Timer = Engine.Timer;
-    using PO = Engine.PositionedObject;
+    using Object = Engine.PositionedObject;
+    using Sprite = Engine.Sprite;
 
-    public class Player : Engine.Sprite
+    public class Player : Sprite
     {
-        Engine.Sprite m_PlayerSprite;
-        Engine.Sprite m_WingRight;
-        Engine.Sprite m_WingLeft;
-        Engine.Sprite m_RunRight;
-        Engine.Sprite m_RunLeft;
+        Sprite m_WingRight;
+        Sprite m_WingLeft;
+        Sprite m_RunRight;
+        Sprite m_RunLeft;
         KeyboardState m_KeyState, m_KeyStateOld;
+        Object m_GroundSensor;
         int m_SpriteSize;
         bool m_GoLeftKeyDown;
         bool m_GoRightKeyDown;
         bool m_Stoped;
         bool m_OnGround;
 
+        public Object GroundSensor
+        {
+            get { return m_GroundSensor; }
+        }
+
         public Player(Game game) : base(game)
         {
-            m_PlayerSprite = new Engine.Sprite(game);
-            AddChild(m_PlayerSprite, false, true);
-            m_WingRight = new Engine.Sprite(game);
+            m_WingRight = new Sprite(game);
             AddChild(m_WingRight, false, true);
-            m_WingLeft = new Engine.Sprite(game);
+            m_WingLeft = new Sprite(game);
             AddChild(m_WingLeft, false, true);
-            m_RunRight = new Engine.Sprite(game);
+            m_RunRight = new Sprite(game);
             AddChild(m_RunRight, false, true);
-            m_RunLeft = new Engine.Sprite(game);
+            m_RunLeft = new Sprite(game);
             AddChild(m_RunLeft, false, true);
+            m_GroundSensor = new Object(game);
+            AddChild(m_GroundSensor, true, false);
         }
 
         public override void Initialize()
         {
+            Scale = 3.7f;
+
             base.Initialize();
-            Scale = 3;
         }
 
-        public void LoadTexture(Texture2D texture)
+        public void LoadContent()
         {
+            Texture2D playerSheet = Game.Content.Load<Texture2D>(@"JoustSpriteSheet");
             m_SpriteSize = 20;
-
-            m_PlayerSprite.Initialize(texture, new Rectangle(0, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero, true); //Standing Right 0
-            m_PlayerSprite.AddFrame(new Rectangle(0, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));//Standing Left 1
-            m_PlayerSprite.AddFrame(new Rectangle(0, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize));//Breaking Right 2
-            m_PlayerSprite.AddFrame(new Rectangle(0, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize));//Breaking Left 3
-            m_PlayerSprite.AddFrame(new Rectangle(0, m_SpriteSize * 4 + 4, m_SpriteSize, m_SpriteSize));//Flying Right 4
-            m_PlayerSprite.AddFrame(new Rectangle(0, m_SpriteSize * 5 + 5, m_SpriteSize, m_SpriteSize));//Flying Left 5
-            m_RunRight.Initialize(texture, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize),
-                Vector2.Zero, true);//Running Right 0
+            Initialize(playerSheet, new Rectangle(0, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero, Scale, false); //Standing Right 0
+            AddFrame(new Rectangle(0, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));//Standing Left 1
+            AddFrame(new Rectangle(0, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize));//Breaking Right 2
+            AddFrame(new Rectangle(0, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize));//Breaking Left 3
+            AddFrame(new Rectangle(0, m_SpriteSize * 4 + 4, m_SpriteSize, m_SpriteSize));//Flying Right 4
+            AddFrame(new Rectangle(0, m_SpriteSize * 5 + 5, m_SpriteSize, m_SpriteSize));//Flying Left 5
+            m_RunRight.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize),
+                Vector2.Zero, Scale, true);//Running Right 0
             m_RunRight.AddFrame(new Rectangle(m_SpriteSize * 2 + 2, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize));//Running Right 1
-            m_RunLeft.Initialize(texture, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize),
-                Vector2.Zero, true);//Running Left 0
+            m_RunLeft.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize),
+                Vector2.Zero, Scale, true);//Running Left 0
             m_RunLeft.AddFrame(new Rectangle(m_SpriteSize * 2 + 2, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize));//Running Left 1
-            m_WingRight.Initialize(texture, new Rectangle(m_SpriteSize + 1, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero, true);
+            m_WingRight.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero,
+                Scale, true);
             m_WingRight.AddFrame(new Rectangle(m_SpriteSize * 2 + 1, 0, m_SpriteSize, m_SpriteSize));
             m_WingRight.AddFrame(new Rectangle(m_SpriteSize * 3 + 1, 0, m_SpriteSize, m_SpriteSize));
             m_WingRight.Moveable = false;
-            m_WingLeft.Initialize(texture, new Rectangle(m_SpriteSize + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize), Vector2.Zero, true);
+            m_WingLeft.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize),
+                Vector2.Zero, Scale, true);
             m_WingLeft.AddFrame(new Rectangle(m_SpriteSize * 2 + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));
             m_WingLeft.AddFrame(new Rectangle(m_SpriteSize * 3 + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));
             m_WingLeft.Moveable = false;
@@ -73,13 +82,13 @@ namespace Joust.PO
 
         public override void BeginRun()
         {
-            base.BeginRun();
             m_RunLeft.Active = false;
-            m_RunLeft.Animate  = true;
             m_RunRight.Active = false;
-            m_RunRight.Animate = true;
-            m_PlayerSprite.Animate = false;
-            Position = new Vector2(Serv.WindowWidth * 0.25f, Serv.WindowHeight - m_SpriteSize);
+            Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - m_SpriteSize * Scale);
+            m_GroundSensor.AABB.Width = 40;
+            m_GroundSensor.AABB.Height = 1;
+            m_GroundSensor.ReletivePosition.Y = SpriteHeight;
+            base.BeginRun();
         }
 
         public override void Update(GameTime gameTime)
@@ -87,16 +96,47 @@ namespace Joust.PO
             Position = Serv.CheckSideBorders(Position);
             Position = Serv.ClampTopBottom(Position, Scale * m_SpriteSize);
 
-            Gravity();
-
             if (m_OnGround)
                 OnGround();
+            else
+                Gravity();
 
             m_KeyState = Keyboard.GetState();
             KeyInput();
             m_KeyStateOld = m_KeyState;
 
             base.Update(gameTime);
+        }
+
+        public void Bumped(Vector2 position)
+        {
+            Acceleration = Vector2.Zero;
+            Velocity = (Velocity * 0.1f) * -1;
+            Velocity += Serv.SetVelocityFromAngle(Serv.AngleFromVectors(position, Position), 75);
+        }
+
+        public void Landed()
+        {
+            Acceleration.Y = 0;
+            Velocity.Y = 0;
+            m_OnGround = true;
+
+            if (Frame == 4)
+                Frame = 0;
+
+            if (Frame == 5)
+                Frame = 1;
+
+        }
+
+        public void InAir()
+        {
+            if (m_OnGround)
+            {
+                m_OnGround = false;
+                FlightMode();
+                Glide();
+            }
         }
 
         void KeyInput()
@@ -128,33 +168,40 @@ namespace Joust.PO
         {
             Acceleration.X = 0;
 
-            if (m_PlayerSprite.Frame == 4)
+            if (Frame == 4)
             {
                 m_WingRight.Animate = false;
                 m_WingRight.Frame = 1;
             }
-            else if (m_PlayerSprite.Frame == 5)
+            else if (Frame == 5)
             {
                 m_WingLeft.Animate = false;
                 m_WingLeft.Frame = 1;
             }
         }
 
+        void FlightMode()
+        {
+            m_RunLeft.Active = false;
+            m_RunRight.Active = false;
+            Visable = true;
+
+            if (Frame == 0)
+                Frame = 4;
+
+            if (Frame == 1)
+                Frame = 5;
+        }
+
         void Flap()
         {
             Acceleration.Y = -40;
             Position.Y -= 1;
-            m_RunLeft.Active = false;
-            m_RunRight.Active = false;
-            m_PlayerSprite.Active = true;
+            m_OnGround = false;
 
-            if (m_PlayerSprite.Frame == 0)
-                m_PlayerSprite.Frame = 4;
+            FlightMode();
 
-            if (m_PlayerSprite.Frame == 1)
-                m_PlayerSprite.Frame = 5;
-
-            if (m_PlayerSprite.Frame == 4)
+            if (Frame == 4)
             {
                 m_WingRight.Active = true;
                 m_WingRight.Animate = true;
@@ -163,7 +210,7 @@ namespace Joust.PO
                 if (Velocity.X < 400 && m_GoRightKeyDown)
                     Acceleration.X = 100;
             }
-            else if (m_PlayerSprite.Frame == 5)
+            else if (Frame == 5)
             {
                 m_WingLeft.Active = true;
                 m_WingLeft.Animate = true;
@@ -182,15 +229,30 @@ namespace Joust.PO
 
             if (m_OnGround)
             {
-                Acceleration.X = 175;
-                m_PlayerSprite.Frame = 0;
+                if (!m_Stoped)
+                {
+                    Acceleration.X = 175;
+                    Frame = 0;
+                }
+                else
+                {
+                    Frame = 1;
+                }
 
-                if (Velocity.X < 0)
+
+                if (Velocity.X < 0 && !m_Stoped)
                 {
                     m_RunLeft.Active = false;
-                    m_PlayerSprite.Active = true;
-                    m_PlayerSprite.Frame = 3;
+                    Visable = true;
+                    Frame = 3;
                     Acceleration.X = 250;
+
+                    if (Velocity.X > -10)
+                    {
+                        m_Stoped = true;
+                        Velocity.X = 0;
+                        Acceleration.X = 0;
+                    }
                 }
             }
         }
@@ -202,15 +264,30 @@ namespace Joust.PO
 
             if (m_OnGround)
             {
-                Acceleration.X = -175;
-                m_PlayerSprite.Frame = 1;
+                if (!m_Stoped)
+                {
+                    Acceleration.X = -175;
+                    Frame = 1;
+                }
+                else
+                {
+                    Frame = 0;
+                }
 
-                if (Velocity.X > 0)
+
+                if (Velocity.X > 0 && !m_Stoped)
                 {
                     m_RunRight.Active = false;
-                    m_PlayerSprite.Active = true;
-                    m_PlayerSprite.Frame = 2;
+                    Visable = true;
+                    Frame = 2;
                     Acceleration.X = -250;
+
+                    if (Velocity.X < 10)
+                    {
+                        m_Stoped = true;
+                        Velocity.X = 0;
+                        Acceleration.X = 0;
+                    }
                 }
             }
         }
@@ -221,35 +298,36 @@ namespace Joust.PO
             m_WingLeft.Active = false;
             m_RunLeft.Active = false;
             m_RunRight.Active = false;
-            m_PlayerSprite.Active = true;
+            Visable = true;
             Acceleration.X = 0;
 
-            if (Velocity.X > 0)
+            if (Velocity.X > 0 && !m_Stoped)
             {
                 m_RunRight.Active = true;
-                m_PlayerSprite.Active = false;
+                Visable = false;
             }
 
-            if (Velocity.X < 0)
+            if (Velocity.X < 0 && !m_Stoped)
             {
                 m_RunLeft.Active = true;
-                m_PlayerSprite.Active = false;
+                Visable = false;
             }
+
+            if (!m_GoLeftKeyDown && !m_GoRightKeyDown)
+                m_Stoped = false;
         }
 
         void Gravity()
         {
             if (Position.Y < Serv.WindowHeight - Scale * m_SpriteSize)
             {
-                m_OnGround = false;
-
                 if (m_GoRightKeyDown)
                 {
-                    m_PlayerSprite.Frame = 4;
+                    Frame = 4;
                 }
                 else if (m_GoLeftKeyDown)
                 {
-                    m_PlayerSprite.Frame = 5;
+                    Frame = 5;
                 }
 
                 if (Velocity.Y < 200)
@@ -260,18 +338,11 @@ namespace Joust.PO
                         Acceleration.Y = 80;
                 }
 
-                if (m_PlayerSprite.Frame == 2)
-                    m_PlayerSprite.Frame = 0;
+                if (Frame == 2)
+                    Frame = 0;
 
-                if (m_PlayerSprite.Frame == 3)
-                    m_PlayerSprite.Frame = 1;
-            }
-            else
-            {
-                Position.Y = Serv.WindowHeight - Scale * m_SpriteSize;
-                Acceleration.Y = 0;
-                Velocity.Y = 0;
-                m_OnGround = true;
+                if (Frame == 3)
+                    Frame = 1;
             }
         }
     }

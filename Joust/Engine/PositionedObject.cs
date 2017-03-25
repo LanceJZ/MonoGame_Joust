@@ -18,12 +18,12 @@ namespace Joust.Engine
 		public Vector2 Acceleration;
 		public Vector2 Velocity;
 		public Vector2 ReletivePosition;
-		Rectangle m_AABB; // The axis-aligned bounding box.
+		public Rectangle AABB; // The axis-aligned bounding box.
 		BasicEffect renderer; // The basic effect used to render the AABB.
 		Matrix m_ViewMatrix = Matrix.CreateLookAt(new Vector3(0.0f, 0.0f, 1f), Vector3.Zero, Vector3.Up);
 		Matrix m_WorldMatrix = Matrix.CreateTranslation(0, 0, 0); // The GameModel's transformation matrix.
-        Matrix m_ProjectionMatrix;
-        short[] indexData; // The index array used to render the AABB.
+		Matrix m_ProjectionMatrix;
+		short[] indexData; // The index array used to render the AABB.
 		VertexPositionColor[] aabbVertices; // The AABB vertex array (used for rendering).
 		float m_RotationInRadians;
 		float m_ReletiveRotation;
@@ -39,7 +39,8 @@ namespace Joust.Engine
 		bool m_ActiveDependent;
 		bool m_DirectConnection;
 		bool m_Parent;
-		bool m_Debug;
+        bool m_Child;
+        bool m_Debug;
 		#endregion
 		#region Properties
 		public float ElapsedGameTime { get { return m_ElapsedGameTime; } }
@@ -92,8 +93,13 @@ namespace Joust.Engine
 			get { return m_Parent; }
 		}
 
+        public bool Child
+        {
+            get { return m_Child; }
+            set { m_Child = value; }
+        }
 
-		public bool Hit
+        public bool Hit
 		{
 			get { return m_Hit; }
 
@@ -145,12 +151,6 @@ namespace Joust.Engine
 		/// <summary>036
 		/// Gets or sets the GameModel's AABB.037
 		/// </summary>
-		public Rectangle AABB
-		{
-			get { return m_AABB; }
-			set { m_AABB = value; }
-		}
-
 		public bool Debug
 		{
 			set { m_Debug = value; }
@@ -181,8 +181,8 @@ namespace Joust.Engine
 				m_ElapsedGameTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 				Velocity += Acceleration * m_ElapsedGameTime;
 				Position += Velocity * m_ElapsedGameTime;
-				m_AABB.X = (int)(Position.X);
-				m_AABB.Y = (int)(Position.Y);
+				AABB.X = (int)(Position.X);
+				AABB.Y = (int)(Position.Y);
 				RotationVelocity += RotationAcceleration * m_ElapsedGameTime;
 				RotationInRadians += RotationVelocity * m_ElapsedGameTime;
 
@@ -192,8 +192,6 @@ namespace Joust.Engine
 				if (RotationInRadians < 0)
 					RotationInRadians = MathHelper.TwoPi;
 			}
-
-
 
 			if (m_Parent)
 			{
@@ -224,7 +222,7 @@ namespace Joust.Engine
 
 		public override void Initialize()
 		{
-			m_AABB = new Rectangle();
+			AABB = new Rectangle();
 
 			base.Initialize();
 		}
@@ -234,7 +232,7 @@ namespace Joust.Engine
 			m_ProjectionMatrix = Matrix.CreateOrthographic(Services.WindowWidth, Services.WindowHeight, 1, 2);
 		}
 
-		public void AddChild(PositionedObject child, bool activeDependent, bool directConnection)
+		public virtual void AddChild(PositionedObject child, bool activeDependent, bool directConnection)
 		{
 			Children.Add(child);
 			Children[Children.Count - 1].ActiveDependent = activeDependent;
@@ -242,10 +240,10 @@ namespace Joust.Engine
 			m_Parent = true;
 		}
 
-		public void SetAABB(Vector2 hieghtWidth)
+        public void SetAABB(Vector2 hieghtWidth)
 		{
-			m_AABB = new Rectangle((int)Position.X, (int)Position.Y, (int)(hieghtWidth.X * m_ScalePercent),
-                (int)(hieghtWidth.Y * m_ScalePercent));
+			AABB = new Rectangle((int)Position.X, (int)Position.Y, (int)(hieghtWidth.X * m_ScalePercent),
+				(int)(hieghtWidth.Y * m_ScalePercent));
 		}
 
 		public void Remove()
