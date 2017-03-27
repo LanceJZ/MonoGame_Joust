@@ -57,7 +57,6 @@ namespace Joust
             m_Background.BeginRun();
             m_Background.PlayerReference(m_Player);
             Serv.AddUpdateableComponent(m_Background);
-            m_Player.Landed();
 
             base.BeginRun();
         }

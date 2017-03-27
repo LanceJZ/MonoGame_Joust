@@ -256,22 +256,30 @@ namespace Joust.Engine
             return Position;
         }
 
-        public static Vector2 CheckSideBorders(Vector2 Position)
+        public static Vector2 CheckSideBorders(Vector2 Position, int width)
         {
-            if (Position.X > WindowWidth)
+            if (Position.X + width > WindowWidth)
                 Position.X = 0;
 
             if (Position.X < 0)
-                Position.X = WindowWidth;
+                Position.X = WindowWidth - width;
 
             return Position;
         }
 
-        public static Vector2 ClampTopBottom(Vector2 Position, float textureHeight)
+        public static Vector2 ClampTopBottom(Vector2 position, float textureHeight)
         {
-            Position.Y = MathHelper.Clamp(Position.Y, 0, WindowHeight - textureHeight);
+            position.Y = MathHelper.Clamp(position.Y, 0, WindowHeight - textureHeight);
 
-            return Position;
+            return position;
+        }
+
+        public static bool HitTop(Vector2 position)
+        {
+            if (position.Y < 0)
+                return true;
+
+            return false;
         }
         #endregion
     }

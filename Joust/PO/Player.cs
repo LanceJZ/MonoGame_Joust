@@ -85,16 +85,23 @@ namespace Joust.PO
             m_RunLeft.Active = false;
             m_RunRight.Active = false;
             Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - m_SpriteSize * Scale);
-            m_GroundSensor.AABB.Width = 40;
-            m_GroundSensor.AABB.Height = 1;
+            m_GroundSensor.AABB.Width = 22;
+            m_GroundSensor.AABB.Height = 5;
             m_GroundSensor.ReletivePosition.Y = SpriteHeight;
+            m_GroundSensor.ReletivePosition.X = SpriteWidth / 2;
             base.BeginRun();
         }
 
         public override void Update(GameTime gameTime)
         {
-            Position = Serv.CheckSideBorders(Position);
-            Position = Serv.ClampTopBottom(Position, Scale * m_SpriteSize);
+            Position = Serv.CheckSideBorders(Position, AABB.Width);
+
+            if (Serv.HitTop(Position))
+            {
+                Acceleration.Y = 0;
+                Velocity.Y = (Velocity.Y * 0.25f) * -1;
+                Position.Y = 1;
+            }
 
             if (m_OnGround)
                 OnGround();
@@ -115,10 +122,11 @@ namespace Joust.PO
             Velocity += Serv.SetVelocityFromAngle(Serv.AngleFromVectors(position, Position), 75);
         }
 
-        public void Landed()
+        public void Landed(float groundY)
         {
             Acceleration.Y = 0;
             Velocity.Y = 0;
+            Position.Y = groundY - AABB.Height;
             m_OnGround = true;
 
             if (Frame == 4)
@@ -195,7 +203,7 @@ namespace Joust.PO
 
         void Flap()
         {
-            Acceleration.Y = -40;
+            Acceleration.Y = -50;
             Position.Y -= 1;
             m_OnGround = false;
 
@@ -208,7 +216,7 @@ namespace Joust.PO
                 m_WingLeft.Active = false;
 
                 if (Velocity.X < 400 && m_GoRightKeyDown)
-                    Acceleration.X = 100;
+                    Acceleration.X = 120;
             }
             else if (Frame == 5)
             {
@@ -218,7 +226,7 @@ namespace Joust.PO
 
 
                 if (Velocity.X > -400 && m_GoLeftKeyDown)
-                    Acceleration.X = -100;
+                    Acceleration.X = -120;
             }
         }
 
@@ -304,12 +312,14 @@ namespace Joust.PO
             if (Velocity.X > 0 && !m_Stoped)
             {
                 m_RunRight.Active = true;
+                Frame = 0;
                 Visable = false;
             }
 
             if (Velocity.X < 0 && !m_Stoped)
             {
                 m_RunLeft.Active = true;
+                Frame = 1;
                 Visable = false;
             }
 
