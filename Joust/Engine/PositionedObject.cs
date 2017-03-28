@@ -39,8 +39,8 @@ namespace Joust.Engine
 		bool m_ActiveDependent;
 		bool m_DirectConnection;
 		bool m_Parent;
-        bool m_Child;
-        bool m_Debug;
+		bool m_Child;
+		bool m_Debug;
 		#endregion
 		#region Properties
 		public float ElapsedGameTime { get { return m_ElapsedGameTime; } }
@@ -93,13 +93,13 @@ namespace Joust.Engine
 			get { return m_Parent; }
 		}
 
-        public bool Child
-        {
-            get { return m_Child; }
-            set { m_Child = value; }
-        }
+		public bool Child
+		{
+			get { return m_Child; }
+			set { m_Child = value; }
+		}
 
-        public bool Hit
+		public bool Hit
 		{
 			get { return m_Hit; }
 
@@ -240,7 +240,7 @@ namespace Joust.Engine
 			m_Parent = true;
 		}
 
-        public void SetAABB(Vector2 hieghtWidth)
+		public void SetAABB(Vector2 hieghtWidth)
 		{
 			AABB = new Rectangle((int)Position.X, (int)Position.Y, (int)(hieghtWidth.X * m_ScalePercent),
 				(int)(hieghtWidth.Y * m_ScalePercent));

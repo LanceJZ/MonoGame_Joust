@@ -19,8 +19,12 @@ namespace Joust
         List<Sprite> m_Shelfs;
         List<Sprite> m_Lava;
         List<Sprite> m_RetractingShelfs;
-        Texture2D m_BackgroundSheet;
         float m_Scale = 3.7f;
+
+        public List<Sprite> Pads { get => m_Pads;}
+        public List<Sprite> Shelfs { get => m_Shelfs;}
+        public List<Sprite> RetractingShelfs { get => m_RetractingShelfs;}
+        public Sprite Ground { get => m_Ground; }
 
         public Background(Game game) : base(game)
         {
@@ -59,29 +63,30 @@ namespace Joust
 
         public void LoadContent()
         {
-            m_BackgroundSheet = Game.Content.Load<Texture2D>(@"JoustBGSpriteSheet");
-            m_Ground.Initialize(m_BackgroundSheet, new Rectangle(0, 0, 204, 32),
+            Texture2D backgroundSheet = Game.Content.Load<Texture2D>(@"JoustBGSpriteSheet");
+            m_Ground.Initialize(backgroundSheet, new Rectangle(0, 0, 204, 32),
                 new Vector2(Serv.WindowWidth * 0.5f - ((204 * m_Scale) * 0.5f), 204 * m_Scale), m_Scale);
-            m_Shelfs[0].Initialize(m_BackgroundSheet, new Rectangle(133, 46, 69, 10), new Vector2(110 * m_Scale, 156 * m_Scale), m_Scale);
-            m_Shelfs[1].Initialize(m_BackgroundSheet, new Rectangle(136, 34, 56, 8), new Vector2(0, 131 * m_Scale), m_Scale);
-            m_Shelfs[2].Initialize(m_BackgroundSheet, new Rectangle(194, 34, 62, 11), new Vector2(220 * m_Scale, 122 * m_Scale), m_Scale);
-            m_Shelfs[3].Initialize(m_BackgroundSheet, new Rectangle(211, 4, 45, 8),
+            m_Shelfs[0].Initialize(backgroundSheet, new Rectangle(133, 46, 69, 10), new Vector2(110 * m_Scale, 156 * m_Scale), m_Scale);
+            m_Shelfs[1].Initialize(backgroundSheet, new Rectangle(136, 34, 56, 8), new Vector2(0, 131 * m_Scale), m_Scale);
+            m_Shelfs[2].Initialize(backgroundSheet, new Rectangle(194, 34, 62, 11), new Vector2(220 * m_Scale, 122 * m_Scale), m_Scale);
+            m_Shelfs[3].Initialize(backgroundSheet, new Rectangle(211, 4, 45, 8),
                 new Vector2(Serv.WindowWidth - (45 * m_Scale), 131 * m_Scale), m_Scale);
-            m_Shelfs[4].Initialize(m_BackgroundSheet, new Rectangle(225, 13, 31, 7), new Vector2(0, 62 * m_Scale), m_Scale);
-            m_Shelfs[5].Initialize(m_BackgroundSheet, new Rectangle(66, 34, 68, 8), new Vector2(88 * m_Scale, 74 * m_Scale), m_Scale);
-            m_Shelfs[6].Initialize(m_BackgroundSheet, new Rectangle(204, 46, 52, 7),
+            m_Shelfs[4].Initialize(backgroundSheet, new Rectangle(225, 13, 31, 7), new Vector2(0, 62 * m_Scale), m_Scale);
+            m_Shelfs[5].Initialize(backgroundSheet, new Rectangle(66, 34, 68, 8), new Vector2(88 * m_Scale, 74 * m_Scale), m_Scale);
+            m_Shelfs[6].Initialize(backgroundSheet, new Rectangle(204, 46, 52, 7),
                 new Vector2(Serv.WindowWidth - (52 * m_Scale), 62 * m_Scale), m_Scale);
-            m_RetractingShelfs[0].Initialize(m_BackgroundSheet, new Rectangle(0, 46, 80, 4), new Vector2(0, 204 * m_Scale), m_Scale);
-            m_RetractingShelfs[1].Initialize(m_BackgroundSheet, new Rectangle(0, 46, 80, 4),
+            m_RetractingShelfs[0].Initialize(backgroundSheet, new Rectangle(0, 46, 80, 4), new Vector2(0, 204 * m_Scale), m_Scale);
+            m_RetractingShelfs[1].Initialize(backgroundSheet, new Rectangle(0, 46, 80, 4),
                 new Vector2(Serv.WindowWidth - (80 * m_Scale), 204 * m_Scale), m_Scale);
-            m_Pads[0].Initialize(m_BackgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(110 * m_Scale, 74 * m_Scale), m_Scale);
-            m_Pads[1].Initialize(m_BackgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(11 * m_Scale, 131 * m_Scale), m_Scale);
-            m_Pads[2].Initialize(m_BackgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(239 * m_Scale, 122 * m_Scale), m_Scale);
-            m_Pads[3].Initialize(m_BackgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(125 * m_Scale, 204 * m_Scale), m_Scale);
+            m_Pads[0].Initialize(backgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(110 * m_Scale, 74 * m_Scale), m_Scale);
+            m_Pads[1].Initialize(backgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(11 * m_Scale, 131 * m_Scale), m_Scale);
+            m_Pads[2].Initialize(backgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(239 * m_Scale, 122 * m_Scale), m_Scale);
+            m_Pads[3].Initialize(backgroundSheet, new Rectangle(226, 0, 30, 3), new Vector2(125 * m_Scale, 204 * m_Scale), m_Scale);
+            // Pad 0 is Top. Pad 1 is Left. Pad 2 is Right. Pad 3 is Bottom.
 
             for (int i = 0; i < 5; i++)
             {
-                m_Lava[i].Initialize(m_BackgroundSheet, new Rectangle(0, 34, 64, 11),
+                m_Lava[i].Initialize(backgroundSheet, new Rectangle(0, 34, 64, 11),
                     new Vector2(240 * i, 232 * m_Scale), 4);
             }
         }
@@ -110,7 +115,7 @@ namespace Joust
             {
                 if (m_Player.AABB.Intersects(m_Shelfs[i].AABB))
                 {
-                    if (m_Player.PerPixelCollusion(m_Shelfs[i].Position, m_Shelfs[i].AABBScaledToFrame, m_Shelfs[i].ColorData))
+                    if (m_Player.PerPixelCollision(m_Shelfs[i].Position, m_Shelfs[i].AABBScaledToFrame, m_Shelfs[i].ColorData))
                     {
                         m_Player.Bumped(m_Shelfs[i].Position);
                         return;

@@ -24,8 +24,6 @@ namespace Joust.Engine
         List<Rectangle> m_Frames = new List<Rectangle>();
         List<ColorData> m_ColorData = new List<ColorData>(); //This sprite's frame color data.
         Timer m_FrameTime;
-        int m_SpriteWidth;
-        int m_SpriteHeight;
         int m_CurrentFrame;
         public List<PositionedObject> SpriteChildren;
         public Rectangle AABBScaledToFrame;
@@ -79,17 +77,7 @@ namespace Joust.Engine
 
         public Vector2 SpriteSize
         {
-            get { return new Vector2(m_SpriteWidth, m_SpriteHeight); }
-        }
-
-        public int SpriteWidth
-        {
-            get { return m_SpriteWidth; }
-        }
-
-        public int SpriteHeight
-        {
-            get { return m_SpriteHeight; }
+            get { return new Vector2(AABB.Width, AABB.Height); }
         }
 
         #endregion
@@ -130,8 +118,6 @@ namespace Joust.Engine
             Scale = scale;
             SetAABB(new Vector2(initialFrame.Width, initialFrame.Height));
             AABBScaledToFrame = new Rectangle(0, 0, initialFrame.Width, initialFrame.Height);
-            m_SpriteWidth = (int)(initialFrame.Width * Scale);
-            m_SpriteHeight = (int)(initialFrame.Height * Scale);
             m_Frames.Add(initialFrame);
             m_ColorData.Add(new ColorData(new Color[initialFrame.Width * initialFrame.Height]));
             m_Texture.GetData<Color>(0, initialFrame, m_ColorData[0].Data, 0, m_ColorData[0].Data.Length);
@@ -164,14 +150,14 @@ namespace Joust.Engine
             base.AddChild(child, activeDependent, directConnection);
         }
         /// <summary>
-        /// Per Pixel Collusion. Pass in the position of the target sprite, target rectangle scaled to the actual sprite
+        /// Per Pixel Collision detection. Pass in the position of the target sprite, target rectangle scaled to the actual sprite
         /// size along with the color data.
         /// </summary>
         /// <param name="targetPosition"></param>
         /// <param name="targetScaledAABB"></param> This is the rectangle scaled to the actual sprite texture size.
         /// <param name="targetColorData"></param>
         /// <returns></returns>
-        public bool PerPixelCollusion(Vector2 targetPosition, Rectangle targetScaledAABB, Color[] targetColorData)
+        public bool PerPixelCollision(Vector2 targetPosition, Rectangle targetScaledAABB, Color[] targetColorData)
         {
             //Move rectangles into scaled position.
             AABBScaledToFrame.X = (int)(Position.X / Scale);

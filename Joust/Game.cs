@@ -12,6 +12,7 @@ namespace Joust
     {
         GraphicsDeviceManager m_GraphicsDM;
         PO.Player m_Player;
+        PO.Enemy m_Enimy;
         Background m_Background;
 
         public Game()
@@ -31,6 +32,7 @@ namespace Joust
 
             m_Background = new Background(this);
             m_Player = new PO.Player(this);
+            m_Enimy = new PO.Enemy(this);
         }
 
         private void SetMultiSampling(object sender, PreparingDeviceSettingsEventArgs eventArgs)
@@ -54,8 +56,10 @@ namespace Joust
         protected override void BeginRun()
         {
             m_Player.BeginRun();
-            m_Background.BeginRun();
+            m_Enimy.BackgroundReference(m_Background);
+            m_Enimy.BeginRun();
             m_Background.PlayerReference(m_Player);
+            m_Background.BeginRun();
             Serv.AddUpdateableComponent(m_Background);
 
             base.BeginRun();
@@ -68,6 +72,7 @@ namespace Joust
         {
             m_Background.LoadContent();
             m_Player.LoadContent();
+            m_Enimy.LoadContent();
         }
 
         /// <summary>

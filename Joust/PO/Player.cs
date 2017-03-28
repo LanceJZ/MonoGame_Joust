@@ -14,13 +14,12 @@ namespace Joust.PO
 
     public class Player : Sprite
     {
-        Sprite m_WingRight;
-        Sprite m_WingLeft;
+        Sprite m_FlyingRight;
+        Sprite m_FlyingLeft;
         Sprite m_RunRight;
         Sprite m_RunLeft;
         KeyboardState m_KeyState, m_KeyStateOld;
         Object m_GroundSensor;
-        int m_SpriteSize;
         bool m_GoLeftKeyDown;
         bool m_GoRightKeyDown;
         bool m_Stoped;
@@ -33,10 +32,10 @@ namespace Joust.PO
 
         public Player(Game game) : base(game)
         {
-            m_WingRight = new Sprite(game);
-            AddChild(m_WingRight, false, true);
-            m_WingLeft = new Sprite(game);
-            AddChild(m_WingLeft, false, true);
+            m_FlyingRight = new Sprite(game);
+            AddChild(m_FlyingRight, false, true);
+            m_FlyingLeft = new Sprite(game);
+            AddChild(m_FlyingLeft, false, true);
             m_RunRight = new Sprite(game);
             AddChild(m_RunRight, false, true);
             m_RunLeft = new Sprite(game);
@@ -54,41 +53,40 @@ namespace Joust.PO
 
         public void LoadContent()
         {
-            Texture2D playerSheet = Game.Content.Load<Texture2D>(@"JoustSpriteSheet");
-            m_SpriteSize = 20;
-            Initialize(playerSheet, new Rectangle(0, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero, Scale, false); //Standing Right 0
-            AddFrame(new Rectangle(0, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));//Standing Left 1
-            AddFrame(new Rectangle(0, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize));//Breaking Right 2
-            AddFrame(new Rectangle(0, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize));//Breaking Left 3
-            AddFrame(new Rectangle(0, m_SpriteSize * 4 + 4, m_SpriteSize, m_SpriteSize));//Flying Right 4
-            AddFrame(new Rectangle(0, m_SpriteSize * 5 + 5, m_SpriteSize, m_SpriteSize));//Flying Left 5
-            m_RunRight.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize),
+            Texture2D spriteSheet = Game.Content.Load<Texture2D>(@"PlayerOneSpriteSheet");
+            int spriteSize = 20;
+            Initialize(spriteSheet, new Rectangle(0, 0, spriteSize, spriteSize), Vector2.Zero, Scale, false); //Standing Right 0
+            AddFrame(new Rectangle(spriteSize + 1, 0, spriteSize, spriteSize));//Standing Left 1
+            AddFrame(new Rectangle(0, spriteSize * 2 + 2, spriteSize, spriteSize));//Breaking Right 2
+            AddFrame(new Rectangle(spriteSize + 1, spriteSize * 2 + 2, spriteSize, spriteSize));//Breaking Left 3
+            m_RunRight.Initialize(spriteSheet, new Rectangle(0, spriteSize * 3 + 3, spriteSize, spriteSize),
                 Vector2.Zero, Scale, true);//Running Right 0
-            m_RunRight.AddFrame(new Rectangle(m_SpriteSize * 2 + 2, m_SpriteSize * 2 + 2, m_SpriteSize, m_SpriteSize));//Running Right 1
-            m_RunLeft.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize),
+            m_RunRight.AddFrame(new Rectangle(spriteSize + 1, spriteSize * 3 + 3, spriteSize, spriteSize));//Running Right 1
+            m_RunLeft.Initialize(spriteSheet, new Rectangle(spriteSize * 2 + 2, spriteSize * 3 + 3, spriteSize, spriteSize),
                 Vector2.Zero, Scale, true);//Running Left 0
-            m_RunLeft.AddFrame(new Rectangle(m_SpriteSize * 2 + 2, m_SpriteSize * 3 + 3, m_SpriteSize, m_SpriteSize));//Running Left 1
-            m_WingRight.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, 0, m_SpriteSize, m_SpriteSize), Vector2.Zero,
+            m_RunLeft.AddFrame(new Rectangle(spriteSize * 3 + 3, spriteSize * 3 + 3, spriteSize, spriteSize));//Running Left 1
+            m_FlyingRight.Initialize(spriteSheet, new Rectangle(0, spriteSize + 1, spriteSize, spriteSize), Vector2.Zero,
                 Scale, true);
-            m_WingRight.AddFrame(new Rectangle(m_SpriteSize * 2 + 1, 0, m_SpriteSize, m_SpriteSize));
-            m_WingRight.AddFrame(new Rectangle(m_SpriteSize * 3 + 1, 0, m_SpriteSize, m_SpriteSize));
-            m_WingRight.Moveable = false;
-            m_WingLeft.Initialize(playerSheet, new Rectangle(m_SpriteSize + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize),
+            m_FlyingRight.AddFrame(new Rectangle(spriteSize + 1, spriteSize + 1, spriteSize, spriteSize));
+            m_FlyingRight.AddFrame(new Rectangle(spriteSize * 2 + 2, spriteSize + 1, spriteSize, spriteSize));
+            m_FlyingLeft.Initialize(spriteSheet, new Rectangle(spriteSize * 3 + 3, spriteSize + 1, spriteSize, spriteSize),
                 Vector2.Zero, Scale, true);
-            m_WingLeft.AddFrame(new Rectangle(m_SpriteSize * 2 + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));
-            m_WingLeft.AddFrame(new Rectangle(m_SpriteSize * 3 + 1, m_SpriteSize + 1, m_SpriteSize, m_SpriteSize));
-            m_WingLeft.Moveable = false;
+            m_FlyingLeft.AddFrame(new Rectangle(spriteSize * 4 + 4, spriteSize + 1, spriteSize, spriteSize));
+            m_FlyingLeft.AddFrame(new Rectangle(spriteSize * 5 + 5, spriteSize + 1, spriteSize, spriteSize));
         }
 
         public override void BeginRun()
         {
             m_RunLeft.Active = false;
             m_RunRight.Active = false;
-            Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - m_SpriteSize * Scale);
+            m_FlyingLeft.Active = false;
+            m_FlyingRight.Active = false;
+            Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - AABB.Height);
             m_GroundSensor.AABB.Width = 22;
             m_GroundSensor.AABB.Height = 5;
-            m_GroundSensor.ReletivePosition.Y = SpriteHeight;
-            m_GroundSensor.ReletivePosition.X = SpriteWidth / 2;
+            m_GroundSensor.ReletivePosition.Y = AABB.Height;
+            m_GroundSensor.ReletivePosition.X = AABB.Width / 2;
+
             base.BeginRun();
         }
 
@@ -128,11 +126,14 @@ namespace Joust.PO
             Velocity.Y = 0;
             Position.Y = groundY - AABB.Height;
             m_OnGround = true;
+            Visable = true;
+            m_FlyingLeft.Active = false;
+            m_FlyingRight.Active = false;
 
-            if (Frame == 4)
+            if (Frame == 2)
                 Frame = 0;
 
-            if (Frame == 5)
+            if (Frame == 3)
                 Frame = 1;
 
         }
@@ -141,7 +142,15 @@ namespace Joust.PO
         {
             if (m_OnGround)
             {
+                Visable = false;
                 m_OnGround = false;
+
+                if (Frame == 0 || Frame == 2)
+                    m_FlyingRight.Active = true;
+
+                if (Frame == 1 || Frame == 1)
+                    m_FlyingLeft.Active = true;
+
                 FlightMode();
                 Glide();
             }
@@ -176,29 +185,39 @@ namespace Joust.PO
         {
             Acceleration.X = 0;
 
-            if (Frame == 4)
+            if (m_FlyingRight.Active)
             {
-                m_WingRight.Animate = false;
-                m_WingRight.Frame = 1;
+                m_FlyingRight.Animate = false;
+                m_FlyingRight.Frame = 1;
             }
-            else if (Frame == 5)
+            else if (m_FlyingLeft.Active)
             {
-                m_WingLeft.Animate = false;
-                m_WingLeft.Frame = 1;
+                m_FlyingLeft.Animate = false;
+                m_FlyingLeft.Frame = 1;
             }
         }
 
         void FlightMode()
         {
-            m_RunLeft.Active = false;
-            m_RunRight.Active = false;
-            Visable = true;
+            if (!m_FlyingRight.Active && !m_FlyingLeft.Active)
+            {
 
-            if (Frame == 0)
-                Frame = 4;
+                if (Frame == 0 || Frame == 2 || m_RunRight.Active)
+                {
+                    m_FlyingRight.Active = true;
+                    m_FlyingRight.Animate = true;
+                }
 
-            if (Frame == 1)
-                Frame = 5;
+                if (Frame == 1 || Frame == 3 || m_RunLeft.Active)
+                {
+                    m_FlyingLeft.Active = true;
+                    m_FlyingLeft.Animate = true;
+                }
+
+                m_RunLeft.Active = false;
+                m_RunRight.Active = false;
+                Visable = false;
+            }
         }
 
         void Flap()
@@ -209,30 +228,26 @@ namespace Joust.PO
 
             FlightMode();
 
-            if (Frame == 4)
+            if (m_FlyingRight.Active)
             {
-                m_WingRight.Active = true;
-                m_WingRight.Animate = true;
-                m_WingLeft.Active = false;
-
                 if (Velocity.X < 400 && m_GoRightKeyDown)
                     Acceleration.X = 120;
-            }
-            else if (Frame == 5)
-            {
-                m_WingLeft.Active = true;
-                m_WingLeft.Animate = true;
-                m_WingRight.Active = false;
 
+                m_FlyingRight.Animate = true;
+            }
+            else if (m_FlyingLeft.Active)
+            {
 
                 if (Velocity.X > -400 && m_GoLeftKeyDown)
                     Acceleration.X = -120;
+
+                m_FlyingLeft.Animate = true;
             }
         }
 
         void GoRight()
         {
-            m_WingLeft.Active = false;
+            m_FlyingLeft.Active = false;
             m_GoRightKeyDown = true;
 
             if (m_OnGround)
@@ -267,7 +282,7 @@ namespace Joust.PO
 
         void GoLeft()
         {
-            m_WingRight.Active = false;
+            m_FlyingRight.Active = false;
             m_GoLeftKeyDown = true;
 
             if (m_OnGround)
@@ -302,8 +317,8 @@ namespace Joust.PO
 
         void OnGround()
         {
-            m_WingRight.Active = false;
-            m_WingLeft.Active = false;
+            m_FlyingRight.Active = false;
+            m_FlyingLeft.Active = false;
             m_RunLeft.Active = false;
             m_RunRight.Active = false;
             Visable = true;
@@ -329,15 +344,17 @@ namespace Joust.PO
 
         void Gravity()
         {
-            if (Position.Y < Serv.WindowHeight - Scale * m_SpriteSize)
+            if (Position.Y < Serv.WindowHeight - AABB.Height)
             {
                 if (m_GoRightKeyDown)
                 {
-                    Frame = 4;
+                    m_FlyingRight.Active = true;
+                    m_FlyingLeft.Active = false;
                 }
                 else if (m_GoLeftKeyDown)
                 {
-                    Frame = 5;
+                    m_FlyingLeft.Active = true;
+                    m_FlyingRight.Active = false;
                 }
 
                 if (Velocity.Y < 200)
