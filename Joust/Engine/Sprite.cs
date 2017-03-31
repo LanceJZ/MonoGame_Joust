@@ -90,8 +90,14 @@ namespace Joust.Engine
         public override void Initialize()
         {
             base.Initialize();
+
             Services.AddDrawableComponent(this);
             m_FrameTime.Amount = 0.1f;
+        }
+
+        public virtual void LoadContent()
+        {
+
         }
         /// <summary>
         /// Initialize sprite with texture, where on sprite sheet to get texture, starting position, and if on top if child.
@@ -132,12 +138,13 @@ namespace Joust.Engine
 
         public override void BeginRun()
         {
-
             base.BeginRun();
         }
 
         public override void AddChild(PositionedObject child, bool activeDependent, bool directConnection)
         {
+            base.AddChild(child, activeDependent, directConnection);
+
             if (child is Sprite)
             {
                 SpriteChildren.Add(child);
@@ -146,8 +153,6 @@ namespace Joust.Engine
                 SpriteChildren[SpriteChildren.Count - 1].Child = true;
                 Parent = true;
             }
-
-            base.AddChild(child, activeDependent, directConnection);
         }
         /// <summary>
         /// Per Pixel Collision detection. Pass in the position of the target sprite, target rectangle scaled to the actual sprite
@@ -195,6 +200,8 @@ namespace Joust.Engine
 
         public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             if (Animate && Active)
             {
                 if (m_FrameTime.Seconds >= m_FrameTime.Amount)
@@ -206,8 +213,6 @@ namespace Joust.Engine
                     }
                 }
             }
-
-            base.Update(gameTime);
         }
 
         public void Draw(GameTime gameTime)

@@ -12,8 +12,8 @@ namespace Joust
     {
         GraphicsDeviceManager m_GraphicsDM;
         PO.Player m_Player;
-        PO.Enemy m_Enimy;
         Background m_Background;
+        EnemyControl m_Enemy;
 
         public Game()
         {
@@ -32,7 +32,7 @@ namespace Joust
 
             m_Background = new Background(this);
             m_Player = new PO.Player(this);
-            m_Enimy = new PO.Enemy(this);
+            m_Enemy = new EnemyControl(this);
         }
 
         private void SetMultiSampling(object sender, PreparingDeviceSettingsEventArgs eventArgs)
@@ -49,20 +49,22 @@ namespace Joust
         protected override void Initialize()
         {
             Serv.Initialize(m_GraphicsDM, this);
-
             base.Initialize();
+            m_Player.BackgroundReference(m_Background);
+            m_Enemy.BackgroundReference(m_Background);
+            m_Enemy.PlayerReference(m_Player);
+            Serv.AddUpdateableComponent(m_Background);
+            Components.Add(m_Enemy);
+            Serv.AddBeginable(m_Background);
+            Serv.AddBeginable(m_Enemy);
         }
 
         protected override void BeginRun()
         {
-            m_Player.BeginRun();
-            m_Enimy.BackgroundReference(m_Background);
-            m_Enimy.BeginRun();
-            m_Background.PlayerReference(m_Player);
-            m_Background.BeginRun();
-            Serv.AddUpdateableComponent(m_Background);
-
             base.BeginRun();
+
+            m_Background.BeginRun();
+            Serv.BeginRun();
         }
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -71,8 +73,6 @@ namespace Joust
         protected override void LoadContent()
         {
             m_Background.LoadContent();
-            m_Player.LoadContent();
-            m_Enimy.LoadContent();
         }
 
         /// <summary>
@@ -90,12 +90,10 @@ namespace Joust
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
-            // TODO: Add your update logic here
-
-            base.Update(gameTime);
         }
 
         /// <summary>
@@ -105,7 +103,6 @@ namespace Joust
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(new Color(new Vector3(0.01666f, 0, 0.1f)));
-
             Serv.SpriteBatch.Begin();
             base.Draw(gameTime);
             Serv.SpriteBatch.End();

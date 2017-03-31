@@ -22,6 +22,15 @@ namespace Joust.Engine
             set
             {
                 m_Amount = value;
+                Reset();
+            }
+        }
+
+        public bool Expired
+        {
+            get
+            {
+                return m_Seconds > m_Amount;
             }
         }
 
@@ -32,6 +41,8 @@ namespace Joust.Engine
 
         public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             m_Seconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 

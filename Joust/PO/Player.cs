@@ -14,20 +14,26 @@ namespace Joust.PO
 
     public class Player : Sprite
     {
+        Background m_Background;
         Sprite m_FlyingRight;
         Sprite m_FlyingLeft;
         Sprite m_RunRight;
         Sprite m_RunLeft;
+        Sprite m_FlyWOPlayerRight;
+        Sprite m_FlyWOPlayerLeft;
         KeyboardState m_KeyState, m_KeyStateOld;
         Object m_GroundSensor;
+        Object m_LanceSensor;
+        Timer m_TurnAround;
         bool m_GoLeftKeyDown;
         bool m_GoRightKeyDown;
         bool m_Stoped;
         bool m_OnGround;
+        bool m_BirdEscapes;
 
-        public Object GroundSensor
+        public Object LanceSensor
         {
-            get { return m_GroundSensor; }
+            get { return m_LanceSensor; }
         }
 
         public Player(Game game) : base(game)
@@ -40,18 +46,26 @@ namespace Joust.PO
             AddChild(m_RunRight, false, true);
             m_RunLeft = new Sprite(game);
             AddChild(m_RunLeft, false, true);
+            m_FlyWOPlayerRight = new Sprite(game);
+            AddChild(m_FlyWOPlayerRight, false, true);
+            m_FlyWOPlayerLeft = new Sprite(game);
+            AddChild(m_FlyWOPlayerLeft, false, true);
             m_GroundSensor = new Object(game);
             AddChild(m_GroundSensor, true, false);
+            m_LanceSensor = new Object(game);
+            AddChild(m_LanceSensor, true, false);
+            m_TurnAround = new Timer(game);
         }
 
         public override void Initialize()
         {
-            Scale = 3.7f;
-
             base.Initialize();
+
+            Scale = 3.7f;
+            m_TurnAround.Amount = 0.33f;
         }
 
-        public void LoadContent()
+        public override void LoadContent()
         {
             Texture2D spriteSheet = Game.Content.Load<Texture2D>(@"PlayerOneSpriteSheet");
             int spriteSize = 20;
@@ -73,25 +87,48 @@ namespace Joust.PO
                 Vector2.Zero, Scale, true);
             m_FlyingLeft.AddFrame(new Rectangle(spriteSize * 4 + 4, spriteSize + 1, spriteSize, spriteSize));
             m_FlyingLeft.AddFrame(new Rectangle(spriteSize * 5 + 5, spriteSize + 1, spriteSize, spriteSize));
+            m_FlyWOPlayerRight.Initialize(spriteSheet, new Rectangle(0, spriteSize * 4 + 4, spriteSize, spriteSize),
+                Vector2.Zero, Scale, false);
+            m_FlyWOPlayerRight.AddFrame(new Rectangle(spriteSize + 1, spriteSize * 4 + 4, spriteSize, spriteSize));
+            m_FlyWOPlayerRight.AddFrame(new Rectangle(spriteSize * 2 + 2, spriteSize * 4 + 4, spriteSize, spriteSize));
+            m_FlyWOPlayerLeft.Initialize(spriteSheet, new Rectangle(spriteSize * 3 + 3, spriteSize * 4 + 4, spriteSize, spriteSize),
+                Vector2.Zero, Scale, false);
+            m_FlyWOPlayerLeft.AddFrame(new Rectangle(spriteSize * 4 + 4, spriteSize * 4 + 4, spriteSize, spriteSize));
+            m_FlyWOPlayerLeft.AddFrame(new Rectangle(spriteSize * 5 + 5, spriteSize * 4 + 4, spriteSize, spriteSize));
+        }
+
+        public void BackgroundReference(Background background)
+        {
+            m_Background = background;
         }
 
         public override void BeginRun()
         {
+            base.BeginRun();
+
             m_RunLeft.Active = false;
             m_RunRight.Active = false;
             m_FlyingLeft.Active = false;
             m_FlyingRight.Active = false;
+            m_FlyWOPlayerRight.Active = false;
+            m_FlyWOPlayerLeft.Active = false;
             Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - AABB.Height);
+
             m_GroundSensor.AABB.Width = 22;
             m_GroundSensor.AABB.Height = 5;
             m_GroundSensor.ReletivePosition.Y = AABB.Height;
             m_GroundSensor.ReletivePosition.X = AABB.Width / 2;
 
-            base.BeginRun();
+            m_LanceSensor.AABB.Width = AABB.Width;
+            m_LanceSensor.AABB.Height = 11;
+            m_LanceSensor.ReletivePosition.Y = 15;
+            m_LanceSensor.ReletivePosition.X = AABB.Width / 2;
         }
 
         public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             Position = Serv.CheckSideBorders(Position, AABB.Width);
 
             if (Serv.HitTop(Position))
@@ -101,6 +138,9 @@ namespace Joust.PO
                 Position.Y = 1;
             }
 
+            if (!TouchedGround())
+                BumpedShelf();
+
             if (m_OnGround)
                 OnGround();
             else
@@ -109,8 +149,15 @@ namespace Joust.PO
             m_KeyState = Keyboard.GetState();
             KeyInput();
             m_KeyStateOld = m_KeyState;
+        }
 
-            base.Update(gameTime);
+        public void JoustLost()
+        {
+            Velocity = Vector2.Zero;
+            Acceleration = Vector2.Zero;
+            Position = m_Background.Pads[(int)Serv.RandomMinMax(0, 3.9f)].Position;
+            Position.X += AABB.Width / 2;
+            Position.Y -= AABB.Height;
         }
 
         public void Bumped(Vector2 position)
@@ -120,7 +167,12 @@ namespace Joust.PO
             Velocity += Serv.SetVelocityFromAngle(Serv.AngleFromVectors(position, Position), 75);
         }
 
-        public void Landed(float groundY)
+        void BirdEscapes()
+        {
+
+        }
+
+        void WalkMode(float groundY)
         {
             Acceleration.Y = 0;
             Velocity.Y = 0;
@@ -156,7 +208,7 @@ namespace Joust.PO
             }
         }
 
-        void KeyInput()
+        void KeyInput() // Player stops then turns around when direction change on ground is held down.
         {
             if (!m_KeyStateOld.IsKeyDown(Keys.LeftControl) && !m_KeyStateOld.IsKeyDown(Keys.Space))
             {
@@ -184,6 +236,7 @@ namespace Joust.PO
         void Glide()
         {
             Acceleration.X = 0;
+            m_Stoped = false;
 
             if (m_FlyingRight.Active)
             {
@@ -217,6 +270,7 @@ namespace Joust.PO
                 m_RunLeft.Active = false;
                 m_RunRight.Active = false;
                 Visable = false;
+                m_Stoped = false;
             }
         }
 
@@ -225,12 +279,13 @@ namespace Joust.PO
             Acceleration.Y = -50;
             Position.Y -= 1;
             m_OnGround = false;
+            m_Stoped = false;
 
             FlightMode();
 
             if (m_FlyingRight.Active)
             {
-                if (Velocity.X < 400 && m_GoRightKeyDown)
+                if (Velocity.X < 500 && m_GoRightKeyDown)
                     Acceleration.X = 120;
 
                 m_FlyingRight.Animate = true;
@@ -238,7 +293,7 @@ namespace Joust.PO
             else if (m_FlyingLeft.Active)
             {
 
-                if (Velocity.X > -400 && m_GoLeftKeyDown)
+                if (Velocity.X > -500 && m_GoLeftKeyDown)
                     Acceleration.X = -120;
 
                 m_FlyingLeft.Animate = true;
@@ -254,7 +309,9 @@ namespace Joust.PO
             {
                 if (!m_Stoped)
                 {
-                    Acceleration.X = 175;
+                    if (Velocity.X < 600)
+                        Acceleration.X = 175;
+
                     Frame = 0;
                 }
                 else
@@ -275,7 +332,13 @@ namespace Joust.PO
                         m_Stoped = true;
                         Velocity.X = 0;
                         Acceleration.X = 0;
+                        m_TurnAround.Reset();
                     }
+                }
+                else if (m_TurnAround.Expired)
+                {
+                    m_Stoped = false;
+
                 }
             }
         }
@@ -289,7 +352,9 @@ namespace Joust.PO
             {
                 if (!m_Stoped)
                 {
-                    Acceleration.X = -175;
+                    if (Velocity.X > -600)
+                        Acceleration.X = -175;
+
                     Frame = 1;
                 }
                 else
@@ -310,7 +375,13 @@ namespace Joust.PO
                         m_Stoped = true;
                         Velocity.X = 0;
                         Acceleration.X = 0;
+                        m_TurnAround.Reset();
                     }
+                }
+                else if (m_TurnAround.Expired)
+                {
+                    m_Stoped = false;
+
                 }
             }
         }
@@ -371,6 +442,62 @@ namespace Joust.PO
                 if (Frame == 3)
                     Frame = 1;
             }
+        }
+
+        void BumpedShelf()
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                if (AABB.Intersects(m_Background.Shelfs[i].AABB))
+                {
+                    if (PerPixelCollision(m_Background.Shelfs[i].Position, m_Background.Shelfs[i].AABBScaledToFrame,
+                        m_Background.Shelfs[i].ColorData))
+                    {
+                        Bumped(m_Background.Shelfs[i].Position);
+                        return;
+                    }
+                }
+            }
+        }
+
+        bool TouchedGround()
+        {
+            if (m_GroundSensor.AABB.Intersects(m_Background.Ground.AABB))
+            {
+                if (AABB.Intersects(m_Background.Ground.AABB))
+                    WalkMode(m_Background.Ground.AABB.Top);
+
+                return true;
+            }
+            else
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if (m_GroundSensor.AABB.Intersects(m_Background.Shelfs[i].AABB))
+                    {
+                        if (AABB.Intersects(m_Background.Shelfs[i].AABB))
+                            WalkMode(m_Background.Shelfs[i].AABB.Top);
+
+                        return true;
+                    }
+                    else
+                    {
+                        for (int ii = 0; ii < 2; ii++)
+                        {
+                            if (m_GroundSensor.AABB.Intersects(m_Background.RetractingShelfs[ii].AABB))
+                            {
+                                if (AABB.Intersects(m_Background.RetractingShelfs[ii].AABB))
+                                    WalkMode(m_Background.RetractingShelfs[ii].AABB.Top);
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            InAir();
+            return false;
         }
     }
 }

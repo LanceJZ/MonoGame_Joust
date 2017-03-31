@@ -18,6 +18,7 @@ namespace Joust.Engine
         private static Vector2 m_ScreenSize;
         private static List<IDrawComponent> m_DrawableComponents;
         private static List<IUpdateableComponent> m_UpdateableComponents;
+        private static List<IBeginable> m_Beginable;
         #endregion
         #region Properties
         /// <summary>
@@ -58,12 +59,16 @@ namespace Joust.Engine
         public static void AddDrawableComponent(IDrawComponent drawableComponent)
         {
             m_DrawableComponents.Add(drawableComponent);
-
         }
 
         public static void AddUpdateableComponent(IUpdateableComponent updateableComponent)
         {
             m_UpdateableComponents.Add(updateableComponent);
+        }
+
+        public static void AddBeginable(IBeginable beginable)
+        {
+            m_Beginable.Add(beginable);
         }
         /// <summary>
         /// Get a random float between min and max
@@ -104,24 +109,40 @@ namespace Joust.Engine
         }
         #endregion
         #region Public Methods
+        protected override void LoadContent()
+        {
+            foreach(IDrawComponent loadable in m_DrawableComponents)
+            {
+                loadable.LoadContent();
+            }
+        }
+
+        public static void BeginRun()
+        {
+            foreach(IBeginable begin in m_Beginable)
+            {
+                begin.BeginRun();
+            }
+        }
+
         public override void Draw(GameTime gameTime)
         {
-            foreach(IDrawComponent drawable in m_DrawableComponents)
+            base.Draw(gameTime);
+
+            foreach (IDrawComponent drawable in m_DrawableComponents)
             {
                 drawable.Draw(gameTime);
             }
-
-            base.Draw(gameTime);
         }
 
         public override void Update(GameTime gameTime)
         {
-            foreach(IUpdateableComponent updateable in m_UpdateableComponents)
+            base.Update(gameTime);
+
+            foreach (IUpdateableComponent updateable in m_UpdateableComponents)
             {
                 updateable.Update(gameTime);
             }
-
-            base.Update(gameTime);
         }
         /// <summary>
         /// This is used to start up Panther Engine Services.
@@ -144,6 +165,7 @@ namespace Joust.Engine
                 //Set View Matrix and Projection Matrix
                 m_DrawableComponents = new List<IDrawComponent>();
                 m_UpdateableComponents = new List<IUpdateableComponent>();
+                m_Beginable = new List<IBeginable>();
 
                 return;
             }

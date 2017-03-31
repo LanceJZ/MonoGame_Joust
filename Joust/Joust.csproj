@@ -46,6 +46,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Background.cs" />
+    <Compile Include="EnemyControl.cs" />
+    <Compile Include="Engine\IBeginRun.cs" />
     <Compile Include="Engine\Camera.cs" />
     <Compile Include="Engine\ICamera2D.cs" />
     <Compile Include="Engine\IDrawComponent.cs" />
@@ -56,6 +58,9 @@
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\Timer.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="PO\Egg.cs" />
+    <Compile Include="PO\Enemy.cs" />
+    <Compile Include="PO\HatchedEnemy.cs" />
     <Compile Include="PO\Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Joust.Engine
 {
-	public class PositionedObject : GameComponent
+	public class PositionedObject : GameComponent, IBeginable
 	{
 		#region Fields
 		private float m_ElapsedGameTime;
@@ -174,6 +174,8 @@ namespace Joust.Engine
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		public override void Update(GameTime gameTime)
 		{
+			base.Update(gameTime);
+
 			if (Moveable && Active)
 			{
 				base.Update(gameTime);
@@ -222,9 +224,10 @@ namespace Joust.Engine
 
 		public override void Initialize()
 		{
-			AABB = new Rectangle();
-
 			base.Initialize();
+
+			AABB = new Rectangle();
+			Services.AddBeginable(this);
 		}
 
 		public virtual void BeginRun()

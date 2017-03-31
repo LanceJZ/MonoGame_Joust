@@ -11,9 +11,8 @@ namespace Joust
     using Object = Engine.PositionedObject;
     using Sprite = Engine.Sprite;
 
-    public class Background : GameComponent, Engine.IUpdateableComponent
+    public class Background : GameComponent, Engine.IUpdateableComponent, Engine.IBeginable
     {
-        PO.Player m_Player;
         Sprite m_Ground;
         List<Sprite> m_Pads;
         List<Sprite> m_Shelfs;
@@ -96,72 +95,10 @@ namespace Joust
 
         }
 
-        public void PlayerReference(PO.Player player)
-        {
-            m_Player = player;
-        }
-
         public override void Update(GameTime gameTime)
         {
-            if(!CheckPlayerLanded())
-                CheckPlayerBumpedShelf();
-
             base.Update(gameTime);
-        }
 
-        void CheckPlayerBumpedShelf()
-        {
-            for (int i = 0; i < 7; i++)
-            {
-                if (m_Player.AABB.Intersects(m_Shelfs[i].AABB))
-                {
-                    if (m_Player.PerPixelCollision(m_Shelfs[i].Position, m_Shelfs[i].AABBScaledToFrame, m_Shelfs[i].ColorData))
-                    {
-                        m_Player.Bumped(m_Shelfs[i].Position);
-                        return;
-                    }
-                }
-            }
-        }
-
-        bool CheckPlayerLanded()
-        {
-            if (m_Player.GroundSensor.AABB.Intersects(m_Ground.AABB))
-            {
-                if (m_Player.AABB.Intersects(m_Ground.AABB))
-                    m_Player.Landed(m_Ground.AABB.Top);
-
-                return true;
-            }
-            else
-            {
-                for (int i = 0; i < 7; i++)
-                {
-                    if (m_Player.GroundSensor.AABB.Intersects(m_Shelfs[i].AABB))
-                    {
-                        if (m_Player.AABB.Intersects(m_Shelfs[i].AABB))
-                            m_Player.Landed(m_Shelfs[i].AABB.Top);
-
-                        return true;
-                    }
-                    else
-                    {
-                        for (int ii = 0; ii < 2; ii++)
-                        {
-                            if (m_Player.GroundSensor.AABB.Intersects(m_RetractingShelfs[ii].AABB))
-                            {
-                                if (m_Player.AABB.Intersects(m_RetractingShelfs[ii].AABB))
-                                    m_Player.Landed(m_RetractingShelfs[ii].AABB.Top);
-
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            m_Player.InAir();
-            return false;
         }
     }
 }
