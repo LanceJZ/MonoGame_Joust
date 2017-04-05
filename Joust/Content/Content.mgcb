@@ -49,3 +49,10 @@
 /processorParam:TextureFormat=Color
 /build:EnemyOneSpriteSheet.png
 
+#begin Joystix.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Joystix.spritefont
+

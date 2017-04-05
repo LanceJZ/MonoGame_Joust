@@ -14,6 +14,7 @@ namespace Joust
         PO.Player m_Player;
         Background m_Background;
         EnemyControl m_Enemy;
+        Engine.SpriteFontDisplay m_P1Score;
 
         public Game()
         {
@@ -33,6 +34,7 @@ namespace Joust
             m_Background = new Background(this);
             m_Player = new PO.Player(this);
             m_Enemy = new EnemyControl(this);
+            m_P1Score = new Engine.SpriteFontDisplay(this);
         }
 
         private void SetMultiSampling(object sender, PreparingDeviceSettingsEventArgs eventArgs)
@@ -65,6 +67,8 @@ namespace Joust
 
             m_Background.BeginRun();
             Serv.BeginRun();
+            m_P1Score.String = "0";
+            m_P1Score.TintColor = Color.Red;
         }
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -73,6 +77,7 @@ namespace Joust
         protected override void LoadContent()
         {
             m_Background.LoadContent();
+            m_P1Score.Initialize(Content.Load<SpriteFont>(@"Joystix"), new Vector2(420, 770)); // 420 770
         }
 
         /// <summary>

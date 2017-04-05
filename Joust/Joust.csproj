@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Background.cs" />
     <Compile Include="EnemyControl.cs" />
+    <Compile Include="Engine\SpriteFontDisplay.cs" />
     <Compile Include="Engine\IBeginRun.cs" />
     <Compile Include="Engine\Camera.cs" />
     <Compile Include="Engine\ICamera2D.cs" />
@@ -79,6 +80,7 @@
     <MonoGameContentReference Include="Content\Content.mgcb" />
     <None Include="app.config" />
     <None Include="app.manifest" />
+    <None Include="Content\JoystixMonospace.ttf" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
