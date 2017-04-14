@@ -7,12 +7,9 @@ using System;
 
 namespace Joust.PO
 {
-    using Serv = Engine.Services;
-    using Timer = Engine.Timer;
-    using Object = Engine.PositionedObject;
-    using Sprite = Engine.Sprite;
+    using Engine;
 
-    public class Enemy : Sprite
+    public class Enemy : BirdControl
     {
         Background m_Background;
         Player m_Player;
@@ -24,8 +21,8 @@ namespace Joust.PO
         Sprite m_WalkingLeft;
         Sprite m_RescueRight;
         Sprite m_RescueLeft;
-        Object m_GroundSensor;
-        Object m_LanceSensor;
+        PositionedObject m_GroundSensor;
+        PositionedObject m_LanceSensor;
         Timer m_WakeFromSpawn;
         Timer m_FlapTimer;
         Timer m_TouchedBottomTimer;
@@ -35,7 +32,7 @@ namespace Joust.PO
         bool m_FlightMode;
         bool m_TouchedBottom;
 
-        public Object GroundSensor
+        public PositionedObject GroundSensor
         {
             get { return m_GroundSensor; }
         }
@@ -54,9 +51,9 @@ namespace Joust.PO
             AddChild(m_FlyingLeft, false, true);
             m_NoRiderLeft = new Sprite(game);
             AddChild(m_NoRiderLeft, false, true);
-            m_GroundSensor = new Object(game);
+            m_GroundSensor = new PositionedObject(game);
             AddChild(m_GroundSensor, true, false);
-            m_LanceSensor = new Object(game);
+            m_LanceSensor = new PositionedObject(game);
             AddChild(m_LanceSensor, true, false);
 
             m_WakeFromSpawn = new Timer(game);
@@ -78,6 +75,8 @@ namespace Joust.PO
 
         public override void LoadContent()
         {
+            base.LoadContent();
+
             Texture2D spriteSheet = Game.Content.Load<Texture2D>(@"EnemyOneSpriteSheet");
             int spriteSize = 20;
             Initialize(spriteSheet, new Rectangle(0, spriteSize * 3 + 3, spriteSize, spriteSize), Vector2.Zero, Scale, false); //Flying Left One
@@ -156,17 +155,17 @@ namespace Joust.PO
 
                     if (m_TouchedBottom)
                     {
-                        m_FlapTimer.Amount = Serv.RandomMinMax(0.05f, 0.25f);
+                        m_FlapTimer.Amount = Services.RandomMinMax(0.05f, 0.25f);
                     }
                     else
                     {
-                        m_FlapTimer.Amount = Serv.RandomMinMax(0.05f, 0.36f);
+                        m_FlapTimer.Amount = Services.RandomMinMax(0.05f, 0.36f);
                     }
                 }
 
-                Position = Serv.CheckSideBorders(Position, AABB.Width);
+                Position = Services.CheckSideBorders(Position, AABB.Width);
 
-                if (Serv.HitTop(Position))
+                if (Services.HitTop(Position))
                 {
                     Acceleration.Y = 0;
                     Velocity.Y = (Velocity.Y * 0.25f) * -1;
@@ -176,7 +175,7 @@ namespace Joust.PO
 
                 if (m_SwitchDirection.Expired)
                 {
-                    m_SwitchDirection.Amount = Serv.RandomMinMax(4, 15);
+                    m_SwitchDirection.Amount = Services.RandomMinMax(4, 15);
                     Switch();
                 }
             }
@@ -280,7 +279,7 @@ namespace Joust.PO
                     if (m_TouchedBottomTimer.Expired)
                     {
                         Flap();
-                        m_TouchedBottomTimer.Amount = Serv.RandomMinMax(1, 3);
+                        m_TouchedBottomTimer.Amount = Services.RandomMinMax(1, 3);
                     }
                 }
             }
@@ -337,7 +336,7 @@ namespace Joust.PO
         {
             Acceleration = Vector2.Zero;
             Velocity = (Velocity * 0.1f) * -1;
-            Velocity += Serv.SetVelocityFromAngle(Serv.AngleFromVectors(position, Position), 75);
+            Velocity += Services.SetVelocityFromAngle(Services.AngleFromVectors(position, Position), 75);
         }
 
         public void JoustLost()
@@ -367,7 +366,7 @@ namespace Joust.PO
                 {
                     //JoustLost();
                     Disable();
-                    Spawn(m_Background.Pads[(int)Serv.RandomMinMax(0, 2.9f)].Position + new Vector2(AABB.Width / 2, -AABB.Height));
+                    Spawn(m_Background.Pads[(int)Services.RandomMinMax(0, 2.9f)].Position + new Vector2(AABB.Width / 2, -AABB.Height));
                 }
 
             }

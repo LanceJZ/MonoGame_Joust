@@ -7,12 +7,9 @@ using System;
 
 namespace Joust.PO
 {
-    using Serv = Engine.Services;
-    using Timer = Engine.Timer;
-    using Object = Engine.PositionedObject;
-    using Sprite = Engine.Sprite;
+    using Engine;
 
-    public class Player : Sprite
+    public class Player : BirdControl
     {
         Background m_Background;
         Sprite m_FlyingRight;
@@ -22,16 +19,13 @@ namespace Joust.PO
         Sprite m_FlyWOPlayerRight;
         Sprite m_FlyWOPlayerLeft;
         KeyboardState m_KeyState, m_KeyStateOld;
-        Object m_GroundSensor;
-        Object m_LanceSensor;
+        PositionedObject m_GroundSensor;
+        PositionedObject m_LanceSensor;
         Timer m_TurnAround;
-        bool m_GoLeftKeyDown;
-        bool m_GoRightKeyDown;
-        bool m_Stoped;
-        bool m_OnGround;
-        bool m_BirdEscapes;
+        Mode CurrentMode;
+        Direction KeyDown;
 
-        public Object LanceSensor
+        public PositionedObject LanceSensor
         {
             get { return m_LanceSensor; }
         }
@@ -50,9 +44,9 @@ namespace Joust.PO
             AddChild(m_FlyWOPlayerRight, false, true);
             m_FlyWOPlayerLeft = new Sprite(game);
             AddChild(m_FlyWOPlayerLeft, false, true);
-            m_GroundSensor = new Object(game);
+            m_GroundSensor = new PositionedObject(game);
             AddChild(m_GroundSensor, true, false);
-            m_LanceSensor = new Object(game);
+            m_LanceSensor = new PositionedObject(game);
             AddChild(m_LanceSensor, true, false);
             m_TurnAround = new Timer(game);
         }
@@ -67,6 +61,8 @@ namespace Joust.PO
 
         public override void LoadContent()
         {
+            base.LoadContent();
+
             Texture2D spriteSheet = Game.Content.Load<Texture2D>(@"PlayerOneSpriteSheet");
             int spriteSize = 20;
             Initialize(spriteSheet, new Rectangle(0, 0, spriteSize, spriteSize), Vector2.Zero, Scale, false); //Standing Right 0
@@ -112,7 +108,7 @@ namespace Joust.PO
             m_FlyingRight.Active = false;
             m_FlyWOPlayerRight.Active = false;
             m_FlyWOPlayerLeft.Active = false;
-            Position = new Vector2(Serv.WindowWidth * 0.25f, 204 * Scale - AABB.Height);
+            Position = new Vector2(Services.WindowWidth * 0.25f, 204 * Scale - AABB.Height);
 
             m_GroundSensor.AABB.Width = 22;
             m_GroundSensor.AABB.Height = 5;
@@ -123,28 +119,64 @@ namespace Joust.PO
             m_LanceSensor.AABB.Height = 11;
             m_LanceSensor.ReletivePosition.Y = 15;
             m_LanceSensor.ReletivePosition.X = AABB.Width / 2;
+
+            CurrentMode = Mode.Stopped;
         }
 
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
 
-            Position = Serv.CheckSideBorders(Position, AABB.Width);
+            Position = Services.CheckSideBorders(Position, AABB.Width);
 
-            if (Serv.HitTop(Position))
+            if (Services.HitTop(Position))
             {
                 Acceleration.Y = 0;
                 Velocity.Y = (Velocity.Y * 0.25f) * -1;
                 Position.Y = 1;
             }
 
-            if (!TouchedGround())
-                BumpedShelf();
+            if (TouchedGround())
+            {
 
-            if (m_OnGround)
-                OnGround();
+            }
             else
-                Gravity();
+            {
+                switch (CurrentMode)
+                {
+                    case Mode.Flight:
+                        BumpedShelf();
+                        break;
+
+                    case Mode.Walking:
+                        SwitchToFlightMode();
+                        break;
+                }
+            }
+
+            switch (CurrentMode)
+            {
+                case Mode.Walking:
+                    OnGround();
+                    break;
+
+                case Mode.Stopped:
+                    break;
+
+                case Mode.Start:
+                    break;
+
+                case Mode.Beamin:
+                    break;
+
+                case Mode.BirdEscape:
+                    BirdEscapes();
+                    break;
+
+                case Mode.Flight:
+                    Glide();
+                    break;
+            }
 
             m_KeyState = Keyboard.GetState();
             KeyInput();
@@ -155,7 +187,7 @@ namespace Joust.PO
         {
             Velocity = Vector2.Zero;
             Acceleration = Vector2.Zero;
-            Position = m_Background.Pads[(int)Serv.RandomMinMax(0, 3.9f)].Position;
+            Position = m_Background.Pads[(int)Services.RandomMinMax(0, 3.9f)].Position;
             Position.X += AABB.Width / 2;
             Position.Y -= AABB.Height;
         }
@@ -164,7 +196,7 @@ namespace Joust.PO
         {
             Acceleration = Vector2.Zero;
             Velocity = (Velocity * 0.1f) * -1;
-            Velocity += Serv.SetVelocityFromAngle(Serv.AngleFromVectors(position, Position), 75);
+            Velocity += Services.SetVelocityFromAngle(Services.AngleFromVectors(position, Position), 75);
         }
 
         void BirdEscapes()
@@ -172,39 +204,23 @@ namespace Joust.PO
 
         }
 
-        void WalkMode(float groundY)
+        void SwitchToWalkMode(float groundY)
         {
-            Acceleration.Y = 0;
-            Velocity.Y = 0;
-            Position.Y = groundY - AABB.Height;
-            m_OnGround = true;
-            Visable = true;
-            m_FlyingLeft.Active = false;
-            m_FlyingRight.Active = false;
-
-            if (Frame == 2)
-                Frame = 0;
-
-            if (Frame == 3)
-                Frame = 1;
-
-        }
-
-        public void InAir()
-        {
-            if (m_OnGround)
+            if (CurrentMode == Mode.Flight)
             {
-                Visable = false;
-                m_OnGround = false;
+                Acceleration.Y = 0;
+                Velocity.Y = 0;
+                Position.Y = groundY - AABB.Height;
+                m_FlyingLeft.Active = false;
+                m_FlyingRight.Active = false;
+                CurrentMode = Mode.Walking;
+                Visable = true;
 
-                if (Frame == 0 || Frame == 2)
-                    m_FlyingRight.Active = true;
+                if (Frame == 2)
+                    Frame = 0;
 
-                if (Frame == 1 || Frame == 1)
-                    m_FlyingLeft.Active = true;
-
-                FlightMode();
-                Glide();
+                if (Frame == 3)
+                    Frame = 1;
             }
         }
 
@@ -216,27 +232,24 @@ namespace Joust.PO
                 {
                     Flap();
                 }
-                else if (!m_OnGround)
+                else if (CurrentMode == Mode.Flight)
                 {
                     Glide();
                 }
             }
 
+            KeyDown = Direction.None;
+
             if (m_KeyState.IsKeyDown(Keys.Left))
                 GoLeft();
-            else
-                m_GoLeftKeyDown = false;
 
             if (m_KeyState.IsKeyDown(Keys.Right))
                 GoRight();
-            else
-                m_GoRightKeyDown = false;
         }
 
         void Glide()
         {
             Acceleration.X = 0;
-            m_Stoped = false;
 
             if (m_FlyingRight.Active)
             {
@@ -248,29 +261,35 @@ namespace Joust.PO
                 m_FlyingLeft.Animate = false;
                 m_FlyingLeft.Frame = 1;
             }
+
+            if (Position.Y < Services.WindowHeight - AABB.Height)
+            {
+                if (Velocity.Y < 200)
+                {
+                    if (Acceleration.Y < 0)
+                        Acceleration.Y += 2;
+                    else
+                        Acceleration.Y = 80;
+                }
+            }
         }
 
-        void FlightMode()
+        void SwitchToFlightMode()
         {
-            if (!m_FlyingRight.Active && !m_FlyingLeft.Active)
+            if (CurrentMode != Mode.Flight)
             {
-
-                if (Frame == 0 || Frame == 2 || m_RunRight.Active)
-                {
-                    m_FlyingRight.Active = true;
-                    m_FlyingRight.Animate = true;
-                }
-
-                if (Frame == 1 || Frame == 3 || m_RunLeft.Active)
-                {
-                    m_FlyingLeft.Active = true;
-                    m_FlyingLeft.Animate = true;
-                }
-
+                Visable = false;
+                CurrentMode = Mode.Flight;
                 m_RunLeft.Active = false;
                 m_RunRight.Active = false;
-                Visable = false;
-                m_Stoped = false;
+
+                if (Frame == 0 || Frame == 2)
+                    m_FlyingRight.Active = true;
+
+                if (Frame == 1 || Frame == 1)
+                    m_FlyingLeft.Active = true;
+
+                Glide();
             }
         }
 
@@ -278,23 +297,22 @@ namespace Joust.PO
         {
             Acceleration.Y = -50;
             Position.Y -= 1;
-            m_OnGround = false;
-            m_Stoped = false;
 
-            FlightMode();
+            if (CurrentMode != Mode.Flight)
+                SwitchToFlightMode();
 
             if (m_FlyingRight.Active)
             {
-                if (Velocity.X < 500 && m_GoRightKeyDown)
-                    Acceleration.X = 120;
+                if (Velocity.X < 500 && KeyDown == Direction.Right)
+                    Acceleration.X = 1000;
 
                 m_FlyingRight.Animate = true;
             }
             else if (m_FlyingLeft.Active)
             {
 
-                if (Velocity.X > -500 && m_GoLeftKeyDown)
-                    Acceleration.X = -120;
+                if (Velocity.X > -500 && KeyDown == Direction.Left)
+                    Acceleration.X = -1000;
 
                 m_FlyingLeft.Animate = true;
             }
@@ -302,87 +320,89 @@ namespace Joust.PO
 
         void GoRight()
         {
-            m_FlyingLeft.Active = false;
-            m_GoRightKeyDown = true;
+            KeyDown = Direction.Right;
 
-            if (m_OnGround)
+            switch (CurrentMode)
             {
-                if (!m_Stoped)
-                {
+                case Mode.Flight:
+                    m_FlyingRight.Active = true;
+                    m_FlyingLeft.Active = false;
+                    break;
+
+                case Mode.Walking:
                     if (Velocity.X < 600)
                         Acceleration.X = 175;
 
                     Frame = 0;
-                }
-                else
-                {
-                    Frame = 1;
-                }
 
-
-                if (Velocity.X < 0 && !m_Stoped)
-                {
-                    m_RunLeft.Active = false;
-                    Visable = true;
-                    Frame = 3;
-                    Acceleration.X = 250;
-
-                    if (Velocity.X > -10)
+                    if (Velocity.X < 0)
                     {
-                        m_Stoped = true;
-                        Velocity.X = 0;
-                        Acceleration.X = 0;
-                        m_TurnAround.Reset();
-                    }
-                }
-                else if (m_TurnAround.Expired)
-                {
-                    m_Stoped = false;
+                        m_RunLeft.Active = false;
+                        Visable = true;
+                        Frame = 3;
+                        Acceleration.X = 250;
 
-                }
+                        if (Velocity.X > -10)
+                        {
+                            CurrentMode = Mode.Stopped;
+                            Velocity.X = 0;
+                            Acceleration.X = 0;
+                            m_TurnAround.Reset();
+                        }
+                    }
+                    break;
+
+                case Mode.Stopped:
+                    Frame = 1;
+
+                    if (m_TurnAround.Expired)
+                    {
+                        CurrentMode = Mode.Walking;
+                    }
+                    break;
             }
         }
 
         void GoLeft()
         {
-            m_FlyingRight.Active = false;
-            m_GoLeftKeyDown = true;
+            KeyDown = Direction.Left;
 
-            if (m_OnGround)
+            switch (CurrentMode)
             {
-                if (!m_Stoped)
-                {
+                case Mode.Flight:
+                    m_FlyingLeft.Active = true;
+                    m_FlyingRight.Active = false;
+                    break;
+
+                case Mode.Walking:
                     if (Velocity.X > -600)
                         Acceleration.X = -175;
 
-                    Frame = 1;
-                }
-                else
-                {
-                    Frame = 0;
-                }
-
-
-                if (Velocity.X > 0 && !m_Stoped)
-                {
-                    m_RunRight.Active = false;
-                    Visable = true;
-                    Frame = 2;
-                    Acceleration.X = -250;
-
-                    if (Velocity.X < 10)
+                    if (Velocity.X > 0)
                     {
-                        m_Stoped = true;
-                        Velocity.X = 0;
-                        Acceleration.X = 0;
-                        m_TurnAround.Reset();
-                    }
-                }
-                else if (m_TurnAround.Expired)
-                {
-                    m_Stoped = false;
+                        Frame = 1;
+                        m_RunRight.Active = false;
+                        Visable = true;
+                        Frame = 2;
+                        Acceleration.X = -250;
 
-                }
+                        if (Velocity.X < 10)
+                        {
+                            CurrentMode = Mode.Stopped;
+                            Velocity.X = 0;
+                            Acceleration.X = 0;
+                            m_TurnAround.Reset();
+                        }
+                    }
+                    break;
+
+                case Mode.Stopped:
+                    Frame = 0;
+                if (m_TurnAround.Expired)
+                    {
+                        CurrentMode = Mode.Walking;
+                    }
+                    break;
             }
         }
 
@@ -395,52 +415,17 @@ namespace Joust.PO
             Visable = true;
             Acceleration.X = 0;
 
-            if (Velocity.X > 0 && !m_Stoped)
+            if (Velocity.X > 0)
             {
                 m_RunRight.Active = true;
                 Frame = 0;
                 Visable = false;
             }
-
-            if (Velocity.X < 0 && !m_Stoped)
+            else if (Velocity.X < 0)
             {
                 m_RunLeft.Active = true;
                 Frame = 1;
                 Visable = false;
-            }
-
-            if (!m_GoLeftKeyDown && !m_GoRightKeyDown)
-                m_Stoped = false;
-        }
-
-        void Gravity()
-        {
-            if (Position.Y < Serv.WindowHeight - AABB.Height)
-            {
-                if (m_GoRightKeyDown)
-                {
-                    m_FlyingRight.Active = true;
-                    m_FlyingLeft.Active = false;
-                }
-                else if (m_GoLeftKeyDown)
-                {
-                    m_FlyingLeft.Active = true;
-                    m_FlyingRight.Active = false;
-                }
-
-                if (Velocity.Y < 200)
-                {
-                    if (Acceleration.Y < 0)
-                        Acceleration.Y += 2;
-                    else
-                        Acceleration.Y = 80;
-                }
-
-                if (Frame == 2)
-                    Frame = 0;
-
-                if (Frame == 3)
-                    Frame = 1;
             }
         }
 
@@ -465,7 +450,7 @@ namespace Joust.PO
             if (m_GroundSensor.AABB.Intersects(m_Background.Ground.AABB))
             {
                 if (AABB.Intersects(m_Background.Ground.AABB))
-                    WalkMode(m_Background.Ground.AABB.Top);
+                    SwitchToWalkMode(m_Background.Ground.AABB.Top);
 
                 return true;
             }
@@ -476,7 +461,7 @@ namespace Joust.PO
                     if (m_GroundSensor.AABB.Intersects(m_Background.Shelfs[i].AABB))
                     {
                         if (AABB.Intersects(m_Background.Shelfs[i].AABB))
-                            WalkMode(m_Background.Shelfs[i].AABB.Top);
+                            SwitchToWalkMode(m_Background.Shelfs[i].AABB.Top);
 
                         return true;
                     }
@@ -487,7 +472,7 @@ namespace Joust.PO
                             if (m_GroundSensor.AABB.Intersects(m_Background.RetractingShelfs[ii].AABB))
                             {
                                 if (AABB.Intersects(m_Background.RetractingShelfs[ii].AABB))
-                                    WalkMode(m_Background.RetractingShelfs[ii].AABB.Top);
+                                    SwitchToWalkMode(m_Background.RetractingShelfs[ii].AABB.Top);
 
                                 return true;
                             }
@@ -495,8 +480,6 @@ namespace Joust.PO
                     }
                 }
             }
-
-            InAir();
             return false;
         }
     }
